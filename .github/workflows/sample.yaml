@@ -1,0 +1,14 @@
+name: sample
+
+on:
+  workflow_dispatch:
+
+jobs:
+  hello_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: メッセージを表示
+        run: echo "Hello, GitHub Actions!"
