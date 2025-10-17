@@ -4,6 +4,7 @@
         "deploymentEnabled": {
             "main": true,
             "develop": true,
+            "feat/*": false,
             "*": false
         }
     }
