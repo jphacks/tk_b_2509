@@ -13,6 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Widget {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+model User {
+  id       BigInt  @id @default(sequence()) // CockroachDBの疑似auto-increment
+  name     String  @unique
+  password String
+  avatar   String?
+
+  @@map("Users")
 }
