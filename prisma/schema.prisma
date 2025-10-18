@@ -76,6 +76,12 @@ model Post {
   post_at     DateTime @default(now())
   views_count Int      @default(0)
 
+  random_key_1 Float
+  random_key_2 Float
+  random_key_3 Float
+  random_key_4 Float
+  random_key_5 Float
+
   // 投稿場所 (Placeへのリレーション)
   placeId BigInt
   place   Place @relation(fields: [placeId], references: [id])
@@ -88,6 +94,12 @@ model Post {
   reactions Reaction[]
   // この投稿の閲覧履歴
   views     PostView[]
+
+  @@index([random_key_1])
+  @@index([random_key_2])
+  @@index([random_key_3])
+  @@index([random_key_4])
+  @@index([random_key_5])
 }
 
 // リアクション管理用
