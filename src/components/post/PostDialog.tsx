@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import type { Mood, PostFormData } from "./types";
 import PostFormFields from "./PostFormFields";
@@ -22,6 +22,18 @@ export default function PostDialog({
     image: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ダイアログが開いているときはbodyのスクロールを禁止
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -69,18 +81,18 @@ export default function PostDialog({
 
   return (
     <>
-      {/* バックドロップ */}
+      {/* バックドロップ - 完全に透明（クリックで閉じるのみ） */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+        className="fixed inset-0 z-40 transition-opacity"
         onClick={onClose}
       />
 
       {/* PC: 中央オーバーレイダイアログ */}
       <dialog
         className="
-          hidden md:flex fixed md:inset-1/2 md:-translate-x-1/2 md:-translate-y-1/2 
-          md:w-full md:max-w-md md:rounded-xl md:shadow-2xl md:flex-col
-          z-50 bg-white outline-none
+          hidden lg:flex fixed lg:inset-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 
+          lg:w-full lg:max-w-md lg:rounded-xl lg:shadow-2xl lg:flex-col
+          z-50 bg-white outline-none lg:max-h-[90vh] lg:overflow-y-auto
         "
         open={isOpen}
       >
@@ -106,13 +118,13 @@ export default function PostDialog({
         />
       </dialog>
 
-      {/* モバイル: 下部シート */}
+      {/* モバイル・タブレット: 下部シート */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="postSheetTitle"
         className="
-          fixed bottom-0 left-0 right-0 md:hidden
+          fixed bottom-0 left-0 right-0 lg:hidden md:left-20
           bg-white rounded-t-2xl shadow-2xl z-50
           animate-in slide-in-from-bottom-4
           max-h-[90vh] overflow-y-auto
