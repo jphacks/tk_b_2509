@@ -18,12 +18,12 @@ const NAV_ITEMS = [
   },
   {
     label: "通知",
-    href: "/notification",
+    href: ROUTES.notification,
     icon: Bell,
   },
   {
     label: "自分の投稿",
-    href: "/my-posts",
+    href: ROUTES.profile,
     icon: UserCheck,
   },
 ];

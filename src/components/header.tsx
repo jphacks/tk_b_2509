@@ -17,9 +17,9 @@ export default function Header() {
     // "/login": "ログイン",
     // "/signup": "会員登録",
     [ROUTES.map]: "マップ",
-    // "/notification": "通知",
+    [ROUTES.notification]: "通知",
     // "/settings": "設定",
-    // "/profile": "プロフィール",
+    [ROUTES.profile]: "プロフィール",
   };
 
   const getPageTitle = (): string => {
