@@ -43,7 +43,7 @@ export default function Header() {
 
   return (
     <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
-      <div className="max-w-full px-4 py-3">
+      <div className="max-w-full px-4 py-3 lg:px-6 lg:py-5">
         {/* スマホ: ロゴ中央レイアウト */}
         <div className="md:hidden flex justify-center">
           <Link href={ROUTES.home} className="flex items-center gap-2">
@@ -65,11 +65,11 @@ export default function Header() {
               <Image
                 src="/logo.webp"
                 alt={APP_NAME}
-                width={32}
-                height={32}
+                width={40}
+                height={40}
                 className="object-contain"
               />
-              <span className="text-base font-bold text-slate-900">
+              <span className="text-lg font-bold text-slate-900">
                 {APP_NAME}
               </span>
             </Link>
@@ -78,7 +78,7 @@ export default function Header() {
           {/* 中央: ページタイトル（トップでは非表示） */}
           <div className="flex justify-center">
             {!isRoot && (
-              <h1 className="text-xl font-bold text-slate-900 truncate">
+              <h1 className="text-2xl font-bold text-slate-900 truncate">
                 {getPageTitle()}
               </h1>
             )}
@@ -90,13 +90,13 @@ export default function Header() {
               <>
                 <Link
                   href={ROUTES.login}
-                  className="text-sm font-medium text-slate-700 hover:text-slate-900"
+                  className="text-base font-medium text-slate-700 hover:text-slate-900"
                 >
                   ログイン
                 </Link>
                 <Link
                   href={ROUTES.signup}
-                  className="px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                  className="px-4 py-2 rounded-md bg-blue-600 text-white text-base font-medium hover:bg-blue-700"
                 >
                   会員登録
                 </Link>
