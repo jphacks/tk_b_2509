@@ -99,6 +99,12 @@ export default function SignupPage() {
       }
 
       await response.json();
+      const data = await response.json();
+
+      // トークンをlocalStorageに保存
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
 
       router.push("/login");
     } catch (err) {

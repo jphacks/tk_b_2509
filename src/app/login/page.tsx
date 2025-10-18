@@ -30,6 +30,12 @@ export default function LoginPage() {
       }
 
       await response.json();
+      const data = await response.json();
+
+      // トークンをlocalStorageに保存
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
 
       router.push("/home");
     } catch (err) {
