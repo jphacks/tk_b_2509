@@ -124,12 +124,17 @@ export function ReviewCard({
             size="sm"
             className="flex items-center gap-1.5 text-muted-foreground hover:text-red-500"
             onClick={handleReactionClick}
+            aria-pressed={liked}
+            aria-label={liked ? "いいねを取り消す" : "いいね"}
           >
-            <Heart className={cn(
+            <Heart
+              className={cn(
                 "w-4 h-4",
                 // liked状態に応じてハートを塗りつぶす
                 liked && "fill-red-500"
-              )} />
+              )}
+              aria-hidden="true"
+            />
             <span>{currentCount}</span>
           </Button>
         </div>
