@@ -1,15 +1,18 @@
 "use client";
-import axios from "axios";
 import Image from "next/image";
 import { useEffect } from "react";
 
 export default function Home() {
   useEffect(() => {
-    const res = axios.get("/api/db-health").then((res) => {
-      console.log("DB Health:", res.data);
-    }).catch((err) => {
-      console.error("DB Health Check Failed:", err);
-    });
+    fetch("/api/db-health")
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Network response was not ok");
+        const data = await res.json();
+        console.log("DB Health:", data);
+      })
+      .catch((err) => {
+        console.error("DB Health Check Failed:", err);
+      });
   }, []);
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
