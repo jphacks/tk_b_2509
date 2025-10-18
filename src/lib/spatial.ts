@@ -143,7 +143,7 @@ export const SpatialQueries = {
           place_id,
           ST_AsText(geom) as geom_text
         FROM "Place"
-        WHERE geom && ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)
+        WHERE geom::geometry && ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)
         ORDER BY name
       `,
     );
