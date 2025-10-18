@@ -1,15 +1,26 @@
-import { NextRequest } from "next/server";
-import { verifyToken, extractTokenFromHeader, createAuthErrorResponse } from "./auth";
+import type { NextRequest } from "next/server";
+import {
+  createAuthErrorResponse,
+  extractTokenFromHeader,
+  verifyToken,
+} from "./auth";
+
+type AuthenticatedUser = {
+  userId: string | number;
+  name: string;
+};
+
+type AuthResult = {
+  isAuthenticated: boolean;
+  user?: AuthenticatedUser;
+  error?: ReturnType<typeof createAuthErrorResponse>;
+};
 
 /**
  * 認証ミドルウェア関数
  * リクエストからJWTトークンを検証し、認証情報を返します
  */
-export function authenticateRequest(request: NextRequest): {
-  isAuthenticated: boolean;
-  user?: { userId: string | number; name: string };
-  error?: any;
-} {
+export function authenticateRequest(request: NextRequest): AuthResult {
   try {
     const authHeader = request.headers.get("authorization");
     const token = extractTokenFromHeader(authHeader || "");
@@ -17,7 +28,7 @@ export function authenticateRequest(request: NextRequest): {
     if (!token) {
       return {
         isAuthenticated: false,
-        error: createAuthErrorResponse("認証トークンがありません")
+        error: createAuthErrorResponse("認証トークンがありません"),
       };
     }
 
@@ -25,18 +36,18 @@ export function authenticateRequest(request: NextRequest): {
     if (!decoded) {
       return {
         isAuthenticated: false,
-        error: createAuthErrorResponse("無効な認証トークンです")
+        error: createAuthErrorResponse("無効な認証トークンです"),
       };
     }
 
     return {
       isAuthenticated: true,
-      user: decoded
+      user: decoded,
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       isAuthenticated: false,
-      error: createAuthErrorResponse("認証処理でエラーが発生しました")
+      error: createAuthErrorResponse("認証処理でエラーが発生しました"),
     };
   }
 }
@@ -45,17 +56,18 @@ export function authenticateRequest(request: NextRequest): {
  * 認証必須のAPIルートで使用するヘルパー関数
  * 認証されていない場合は401エラーを返します
  */
-export function requireAuth(request: NextRequest): {
-  user: { userId: string | number; name: string };
-} | Response {
+export function requireAuth(request: NextRequest): AuthResult {
   const authResult = authenticateRequest(request);
 
   if (!authResult.isAuthenticated) {
-    return new Response(JSON.stringify(authResult.error), {
-      status: 401,
-      headers: { "Content-Type": "application/json" }
-    });
+    return {
+      isAuthenticated: false,
+      error: authResult.error,
+    };
   }
 
-  return { user: authResult.user! };
+  return {
+    isAuthenticated: true,
+    user: authResult.user,
+  };
 }
