@@ -168,7 +168,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
       <button
         onClick={() => setIsPostDialogOpen(true)}
         className="
-          fixed bottom-6 right-6 md:bottom-8 md:right-8
+          fixed bottom-20 right-6 md:bottom-8 md:right-8
           w-14 h-14 md:w-16 md:h-16
           rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 
           transition-all active:scale-95
