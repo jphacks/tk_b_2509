@@ -69,7 +69,7 @@ const mapPlaceRow = (row: RawPlaceRow): PlaceWithLocation => {
     name: row.name,
     placeId: row.place_id,
     location: parsePointText(row.geom_text),
-    distanceMeters: coerceNumber(row.distance_meters),
+    distanceMeters: coerceNumber(row.distance_meters ?? null),
   };
 };
 
