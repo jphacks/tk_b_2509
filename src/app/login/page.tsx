@@ -19,6 +19,7 @@ export default function LoginPage() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name, password }),
       });
 
@@ -28,12 +29,7 @@ export default function LoginPage() {
         return;
       }
 
-      const data = await response.json();
-
-      // トークンをlocalStorageに保存
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
+      await response.json();
 
       router.push("/home");
     } catch (err) {

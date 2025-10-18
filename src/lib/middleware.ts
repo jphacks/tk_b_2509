@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import {
+  AUTH_COOKIE_NAME,
   createAuthErrorResponse,
   extractTokenFromHeader,
   verifyToken,
@@ -23,7 +24,9 @@ type AuthResult = {
 export function authenticateRequest(request: NextRequest): AuthResult {
   try {
     const authHeader = request.headers.get("authorization");
-    const token = extractTokenFromHeader(authHeader || "");
+    const headerToken = extractTokenFromHeader(authHeader || "") ?? undefined;
+    const cookieToken = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const token = headerToken ?? cookieToken;
 
     if (!token) {
       return {

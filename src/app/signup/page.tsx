@@ -88,6 +88,7 @@ export default function SignupPage() {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name, password, hometown }),
       });
 
@@ -97,12 +98,7 @@ export default function SignupPage() {
         return;
       }
 
-      const data = await response.json();
-
-      // トークンをlocalStorageに保存
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
+      await response.json();
 
       router.push("/login");
     } catch (err) {

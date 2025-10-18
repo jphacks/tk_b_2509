@@ -4,6 +4,44 @@ import jwt from "jsonwebtoken";
 // JWTシークレットの設定（環境変数から取得）
 const JWT_SECRET_FROM_ENV = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const DEFAULT_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+
+export const AUTH_COOKIE_NAME = "jwt";
+
+const AUTH_COOKIE_BASE_OPTIONS = Object.freeze({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+});
+
+// `jsonwebtoken` の `expiresIn` とCookieのmaxAgeを整合させる
+function expiresInToMaxAge(value: jwt.SignOptions["expiresIn"]): number | null {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  const match = /^(\d+)([dhms])$/.exec(value);
+  if (!match) {
+    return null;
+  }
+
+  const amount = Number.parseInt(match[1], 10);
+  const unit = match[2];
+
+  switch (unit) {
+    case "d":
+      return amount * 60 * 60 * 24;
+    case "h":
+      return amount * 60 * 60;
+    case "m":
+      return amount * 60;
+    case "s":
+      return amount;
+    default:
+      return null;
+  }
+}
 
 function resolveJwtSecret(): string {
   if (JWT_SECRET_FROM_ENV) {
@@ -32,6 +70,13 @@ function validateExpiresIn(value: string): jwt.SignOptions["expiresIn"] {
 }
 
 const validatedExpiresIn = validateExpiresIn(JWT_EXPIRES_IN);
+const resolvedCookieMaxAge =
+  expiresInToMaxAge(validatedExpiresIn) ?? DEFAULT_COOKIE_MAX_AGE_SECONDS;
+
+export const AUTH_COOKIE_OPTIONS = Object.freeze({
+  ...AUTH_COOKIE_BASE_OPTIONS,
+  maxAge: resolvedCookieMaxAge,
+});
 
 /**
  * パスワードをハッシュ化する関数

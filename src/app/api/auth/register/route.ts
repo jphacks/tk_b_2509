@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import {
+  AUTH_COOKIE_NAME,
+  AUTH_COOKIE_OPTIONS,
   createAuthSuccessResponse,
   generateToken,
   hashPassword,
@@ -84,8 +86,8 @@ export async function POST(request: NextRequest) {
       name: newUser.name,
     });
 
-    // 成功レスポンス
-    return NextResponse.json(
+    // 成功レスポンス + Cookieに保存
+    const response = NextResponse.json(
       createAuthSuccessResponse(
         {
           id: newUser.id.toString(),
@@ -94,6 +96,8 @@ export async function POST(request: NextRequest) {
         token,
       ),
     );
+    response.cookies.set(AUTH_COOKIE_NAME, token, { ...AUTH_COOKIE_OPTIONS });
+    return response;
   } catch (error: unknown) {
     console.error("Register error:", error);
     return NextResponse.json(
