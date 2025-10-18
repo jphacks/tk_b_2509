@@ -22,6 +22,7 @@ model User {
   name          String     @unique
   password      String
   avatar        String?
+  home_town     String?
   isVaild       Boolean    @default(true)
   created_at    DateTime   @default(now())
   last_login_at DateTime   @default(now())
