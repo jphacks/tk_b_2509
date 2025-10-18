@@ -552,6 +552,7 @@ packages:
     resolution: {integrity: sha512-BdMjIxy7HUNThK87C7BC8I1rE8BVUsfNQSI5siQ4JK3iIa3w0XyVvVL9SXLWO//CtYTcp1v7zci0fYwJOjB+Zg==}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   '@types/bcryptjs@3.0.0':
     resolution: {integrity: sha512-WRZOuCuaz8UcZZE4R5HXTco2goQSI2XxjGY3hbM/xDvwmqFWd4ivooImsMx65OKM6CtNKbnZ5YL+YwAwK7c1dg==}
     deprecated: This is a stub types definition. bcryptjs provides its own type definitions, so you do not need this installed.
@@ -565,6 +566,10 @@ packages:
   '@types/google.maps@3.58.1':
     resolution: {integrity: sha512-X9QTSvGJ0nCfMzYOnaVs/k6/4L+7F5uCS+4iUmkLEls6J9S/Phv+m/i3mDeyc49ZBgwab3EFO1HEoBY7k98EGQ==}
 >>>>>>> 34ef48f (Implement GoogleMap with pin.)
+=======
+  '@types/google.maps@3.58.1':
+    resolution: {integrity: sha512-X9QTSvGJ0nCfMzYOnaVs/k6/4L+7F5uCS+4iUmkLEls6J9S/Phv+m/i3mDeyc49ZBgwab3EFO1HEoBY7k98EGQ==}
+>>>>>>> 34ef48f6dcd6e63e97e18079860d8e32b14ef29a
 
   '@types/node@20.19.22':
     resolution: {integrity: sha512-hRnu+5qggKDSyWHlnmThnUqg62l29Aj/6vcYgUaSFL9oc7DVjeWEQN3PRgdSc6F8d9QRMWkf36CLMch1Do/+RQ==}
@@ -1415,6 +1420,7 @@ snapshots:
       tailwindcss: 4.1.14
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   '@types/bcryptjs@3.0.0':
     dependencies:
       bcryptjs: 3.0.2
@@ -1428,6 +1434,9 @@ snapshots:
 =======
   '@types/google.maps@3.58.1': {}
 >>>>>>> 34ef48f (Implement GoogleMap with pin.)
+=======
+  '@types/google.maps@3.58.1': {}
+>>>>>>> 34ef48f6dcd6e63e97e18079860d8e32b14ef29a
 
   '@types/node@20.19.22':
     dependencies:
