@@ -1,19 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
+import { ALLOWED_SORT_KEYS, SortKey, FormattedPost } from '@/lib/feed-types';
 
 const prisma = new PrismaClient();
-
-// 許可するソートキーのリスト
-const ALLOWED_SORT_KEYS = [
-  'random_key_1',
-  'random_key_2',
-  'random_key_3',
-  'random_key_4',
-  'random_key_5',
-] as const;
-
-// 型定義: 許可されたソートキーの型
-type SortKey = typeof ALLOWED_SORT_KEYS[number];
 
 /**
  * 投稿のフィードを取得するAPIエンドポイント
@@ -69,23 +58,12 @@ export async function GET(request: Request) {
       // limitより1件多く取得できた場合、次のページが存在する
       const lastPost = posts.pop(); // 余分な1件を配列から削除
       if (lastPost) {
-        nextCursor = lastPost[sortBy]; // 最後の投稿のソートキー値を次のカーソルとする
+        // 実際のフィールド名でソートキーを取得（例: idを数値に変換）
+        nextCursor = Number(lastPost.id); // IDを数値として次のカーソルとする
       }
     }
 
     // 4. フロントエンドのコンポーネント形式にデータを整形
-    interface FormattedPost {
-      id: string;
-      placeName: string;
-      badgeUrl: string;
-      reviewText: string;
-      imageUrl: string | null;
-      reactionCount: number;
-      userAvatarUrl: string | null;
-      userAvatarFallback: string;
-      username: string;
-    }
-
     const formattedPosts: FormattedPost[] = posts.map((post) => {
       // mood_typeに応じてバッジのURLを決定 (仮の実装)
       const getBadgeUrl = (mood: string): string => {
@@ -101,7 +79,7 @@ export async function GET(request: Request) {
         placeName: post.place.name,
         badgeUrl: getBadgeUrl(post.mood_type),
         reviewText: post.contents,
-        imageUrl: post.img || null, // post.img がなければ null を返す
+        imageUrl: null, // 画像フィールドは実装されていないため、常にnullを返す
         reactionCount: post._count.reactions,
         userAvatarUrl: post.author.avatar, // post.author.avatar はスキーマ定義(String?)により元からnullを返す可能性があります
         userAvatarFallback: post.author.name.charAt(0),
@@ -126,4 +104,3 @@ export async function GET(request: Request) {
     );
   }
 }
-
