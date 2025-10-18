@@ -72,7 +72,7 @@ export default async function FeedPage() {
   const initialPosts = await fetchPosts();
 
   return (
-    <div className="w-full p-4 min-h-screen bg-background">
+    <div className="container mx-auto p-4 min-h-screen bg-background">
       {/* 
         FeedList クライアントコンポーネントを呼び出し、
         初期データ (initialPosts) を props として渡す。

@@ -34,7 +34,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:fixed md:left-0 md:top-0 md:h-screen md:bg-white md:flex md:flex-col md:gap-2 md:z-50 md:w-24 md:border-r md:border-slate-200 md:items-center md:p-2 lg:w-48 lg:items-center lg:p-4">
+    <aside className="hidden md:fixed md:left-0 md:top-0 md:h-screen md:bg-white md:flex md:flex-col md:gap-2 md:z-50 md:w-24 md:border-r md:border-slate-200 md:items-center md:p-2 lg:w-24 lg:items-center lg:p-2">
       {/* ロゴ: タブレット＆PC両方でアイコン下に文字を表示 */}
       <Link
         href={ROUTES.home}
