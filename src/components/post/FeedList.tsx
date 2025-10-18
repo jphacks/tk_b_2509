@@ -1,18 +1,17 @@
 "use client";
 
+import { ReviewCard } from "@/components/post/ReviewCard";
+import { PostDialog } from "@/components/post";
 import { Loader2, Plus } from "lucide-react"; // shadcn/ui 標準のスピナーアイコン
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer"; // 無限スクロール用
 import type { PostFormData } from "@/components/post";
-import { PostDialog } from "@/components/post";
-import { ReviewCard } from "@/components/post/ReviewCard";
-import { createPost } from "@/lib/api/posts";
 
 // import { PostData } from "@/types"; // 型定義をインポート
 
 /* --- 型定義 (page.tsx と同じもの) --- */
 interface PostData {
-  id: string;
+  id: number;
   placeName: string;
   mood_type: string;
   contents: string;
@@ -35,7 +34,7 @@ interface FeedListProps {
 
 export function FeedList({ initialPosts }: FeedListProps) {
   // 1. 投稿リストの状態管理
-  const [posts, setPosts] = useState<PostData[]>(initialPosts);
+  const [posts, setPosts] = useState(initialPosts);
 
   // 2. 「引っ張って更新」用の状態管理
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -57,13 +56,19 @@ export function FeedList({ initialPosts }: FeedListProps) {
         event.preventDefault(); // デフォルトのスクロール動作をキャンセル
 
         setIsRefreshing(true);
-        console.log("更新fetch"); // ★ 更新処理の実行
+        
+        setSortBy((prev) => {
+          const newSortKey = getRandomSortKey([prev]);
+          return newSortKey;
+        });
 
-        // (ダミー) 2秒後に更新完了
-        setTimeout(() => {
+        fetchPosts(sortBy, 10, undefined).then((data) => {
+          setPostList(data.posts);
+          setCursor(undefined);
           setIsRefreshing(false);
-          // 本来はここで fetch した新データで setPosts(newPosts) する
-        }, 2000);
+        }).catch(() => {
+          setIsRefreshing(false);
+        });
       }
     };
 
@@ -87,11 +92,8 @@ export function FeedList({ initialPosts }: FeedListProps) {
       // のようにして既存のリストに追加する
 
       // (例) ダミーデータを1件追加するデモ
-      const generatedId =
-        globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36);
-
       const newPost: PostData = {
-        id: generatedId, // 仮のID
+        id: Math.random(), // IDはユニークにする
         placeName: "追加読み込みされたカフェ",
         mood_type: "demo",
         contents: "これは無限スクロールで追加された投稿です。",
@@ -150,6 +152,31 @@ export function FeedList({ initialPosts }: FeedListProps) {
             (例: !isRefreshing && loadMoreInView && <Loader2 ... />) 
           */}
         </div>
+      {/* 8. 投稿リストの表示 */}
+      {posts.map((post) => (
+        <ReviewCard
+          key={post.id}
+          placeName={post.placeName}
+          badgeUrl="/vercel.svg"
+          reviewText={post.contents}
+          imageUrl={post.imageUrl}
+          reactionCount={post.reactionCount}
+          userAvatarUrl={
+            post.userAvatarUrl ||
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
+          }
+          userAvatarFallback={getAvatarFallback(post.username)}
+          username={post.username}
+        />
+      ))}
+
+      {/* 9. 「無限スクロール」用の監視対象要素 */}
+      <div ref={loadMoreRef} className="h-10 w-full">
+        {/* ここにもスピナーを置くことが多い
+          (例: !isRefreshing && loadMoreInView && <Loader2 ... />)
+        */}
+      </div>
+
       </div>
 
       {/* 浮動投稿ボタン（FAB） - モバイル向け */}

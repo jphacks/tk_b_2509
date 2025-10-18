@@ -4,7 +4,7 @@ import { FeedList } from "@/components/post/FeedList";
 
 /* --- 型定義 (このファイルに直接書く場合) --- */
 interface PostData {
-  id: string;
+  id: number;
   placeName: string;
   mood_type: string;
   contents: string;
@@ -23,11 +23,11 @@ async function fetchPosts(): Promise<PostData[]> {
 
   // --- 本来はここでDBからデータを取得する ---
   // const data = await db.posts.findMany(...);
-
+  
   // --- ここから下はダミーデータです ---
   const dummyData: PostData[] = [
     {
-      id: "1",
+      id: 1,
       placeName: "スターバックス 渋谷TSUTAYA店",
       mood_type: "focus", // バッジ用のデータ
       contents:
@@ -39,7 +39,7 @@ async function fetchPosts(): Promise<PostData[]> {
       username: "shadcn_fan",
     },
     {
-      id: "2",
+      id: 2,
       placeName: "近所の公民館の図書室",
       mood_type: "quiet", // バッジ用のデータ
       contents:
@@ -50,7 +50,7 @@ async function fetchPosts(): Promise<PostData[]> {
       username: "vercel_user",
     },
     {
-      id: "3",
+      id: 3,
       placeName: "コメダ珈琲店",
       mood_type: "relax",
       contents: "シロノワールを食べながら作業。ソファ席が快適すぎる。",
@@ -68,17 +68,30 @@ async function fetchPosts(): Promise<PostData[]> {
  * フィード画面ページコンポーネント (サーバーコンポーネント)
  */
 export default async function FeedPage() {
-  // サーバーサイドで「初回表示分」のデータを取得
-  const initialPosts = await fetchPosts();
+  
+  // 1. SSRにより、リクエストごとにランダムキーが選ばれる
+  const sortKey = getRandomSortKey() as SortKey;
 
+  // 2. ★ 解決策: fetchPosts の代わりに 'getFeedLogic' を直接呼び出す
+  // これで "Failed to parse URL" エラーが解消される
+  const initialFeedData = await getFeedLogic(
+    sortKey, 
+    10, // 初回読み込み件数を10件に（適宜調整してください）
+    undefined // 初回なのでカーソルはなし
+  );
+  
   return (
     <div className="container mx-auto p-4 min-h-screen bg-background">
-      {/* 
-        FeedList クライアントコンポーネントを呼び出し、
-        初期データ (initialPosts) を props として渡す。
-        インタラクション（更新、追加読み込み）は FeedList が担当する。
+      {/* FeedList には initialPosts 配列と、
+        クライアントが「続きを読む」ために使う sortKey を渡す
       */}
-      <FeedList initialPosts={initialPosts} />
+      <FeedList 
+        posts={initialFeedData.posts} 
+        nextPageState={{
+          sortBy: initialFeedData.nextPageState.sortBy, 
+          cursor: initialFeedData.nextPageState.cursor 
+        }}
+      />
     </div>
   );
 }
