@@ -13,7 +13,11 @@ import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 
 function buildLogoutResponse() {
-  const response = NextResponse.json({ success: true });
+  const response = NextResponse.json({
+    success: true,
+    message: "ログアウトが完了しました",
+    timestamp: new Date().toISOString()
+  });
   response.cookies.set(ACCESS_TOKEN_COOKIE_NAME, "", {
     ...CLEAR_ACCESS_COOKIE_OPTIONS,
   });
@@ -28,25 +32,31 @@ export async function POST(request: NextRequest) {
     request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value ?? null;
 
   if (refreshTokenRaw) {
-    const claims = verifyRefreshToken(refreshTokenRaw);
-    if (claims?.jti) {
-      const session = await prisma.userSession.findUnique({
-        where: { id: claims.jti },
-      });
-      if (
-        session &&
-        !session.revoked &&
-        session.refresh_token_hash === hashToken(refreshTokenRaw)
-      ) {
-        await prisma.userSession.update({
-          where: { id: session.id },
-          data: {
-            revoked: true,
-            revoked_at: new Date(),
-            revoked_reason: "logout",
-          },
+    try {
+      const claims = verifyRefreshToken(refreshTokenRaw);
+      if (claims?.jti) {
+        const session = await prisma.userSession.findUnique({
+          where: { id: claims.jti },
         });
+
+        if (
+          session &&
+          !session.revoked &&
+          session.refresh_token_hash === hashToken(refreshTokenRaw)
+        ) {
+          await prisma.userSession.update({
+            where: { id: session.id },
+            data: {
+              revoked: true,
+              revoked_at: new Date(),
+              revoked_reason: "logout",
+            },
+          });
+        }
       }
+    } catch (error) {
+      // データベースエラーやトークン検証エラーはログに記録するが、ログアウト処理は継続
+      console.error("Logout session cleanup error:", error);
     }
   }
 
