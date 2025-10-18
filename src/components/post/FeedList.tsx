@@ -33,7 +33,7 @@ interface FeedListProps {
 export function FeedList({ initialPosts }: FeedListProps) {
   // 1. 投稿リストの状態管理
   const [posts, setPosts] = useState(initialPosts);
-  
+
   // 2. 「引っ張って更新」用の状態管理
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -47,13 +47,9 @@ export function FeedList({ initialPosts }: FeedListProps) {
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
       // ページ一番上 + 上スクロール + 更新中でない
-      if (
-        window.scrollY === 0 &&
-        event.deltaY < 0 &&
-        !isRefreshing
-      ) {
+      if (window.scrollY === 0 && event.deltaY < 0 && !isRefreshing) {
         event.preventDefault(); // デフォルトのスクロール動作をキャンセル
-        
+
         setIsRefreshing(true);
         console.log("更新fetch"); // ★ 更新処理の実行
 
@@ -64,10 +60,10 @@ export function FeedList({ initialPosts }: FeedListProps) {
         }, 2000);
       }
     };
-    
+
     // イベントリスナーを登録
     window.addEventListener("wheel", handleWheel, { passive: false });
-    
+
     // クリーンアップ
     return () => {
       window.removeEventListener("wheel", handleWheel);
@@ -79,11 +75,11 @@ export function FeedList({ initialPosts }: FeedListProps) {
     // 監視対象が見えて、かつ更新中でない（多重フェッチ防止）
     if (loadMoreInView && !isRefreshing) {
       console.log("追加fetch"); // ★ 追加フェッチ処理の実行
-      
+
       // (ダミー) ここで fetch した追加データ (newPosts) を
       // setPosts((prevPosts) => [...prevPosts, ...newPosts]);
       // のようにして既存のリストに追加する
-      
+
       // (例) ダミーデータを1件追加するデモ
       const newPost: PostData = {
         id: Math.random(), // IDはユニークにする
@@ -95,7 +91,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
         userAvatarUrl: null,
         username: "System",
       };
-      
+
       // 1秒後にダミーデータを追加
       setTimeout(() => {
         setPosts((prevPosts) => [...prevPosts, newPost]);
@@ -121,12 +117,12 @@ export function FeedList({ initialPosts }: FeedListProps) {
           reviewText={post.contents}
           imageUrl={post.imageUrl}
           reactionCount={post.reactionCount}
-          userAvatarUrl={post.userAvatarUrl ?? undefined}
+          userAvatarUrl={post.userAvatarUrl ?? ""}
           userAvatarFallback={getAvatarFallback(post.username)}
           username={post.username}
         />
       ))}
-      
+
       {/* 8. 「無限スクロール」用の監視対象要素 */}
       <div ref={loadMoreRef} className="h-10 w-full">
         {/* ここにもスピナーを置くことが多い
