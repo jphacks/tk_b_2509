@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/middleware";
 import {
+  ALLOWED_MOOD_TYPES,
   type CreatePostRequestBody,
+  type MoodType,
   type ParsedCreatePostBody,
   REQUIRED_CREATE_POST_FIELDS,
 } from "@/lib/post-types";
@@ -43,17 +45,16 @@ function validateRequestBody(
     return null;
   }
 
-  const moodType =
+  const moodTypeInput =
     typeof body.moodType === "string" ? body.moodType.trim() : "";
+  const moodType = ALLOWED_MOOD_TYPES.find(
+    (value) => value === moodTypeInput,
+  ) as MoodType | undefined;
   const contents =
     typeof body.contents === "string" ? body.contents.trim() : "";
   const placeId = parseBigIntId(body.placeId);
 
   if (!moodType || !contents || placeId === null) {
-    return null;
-  }
-
-  if (moodType.length > 100) {
     return null;
   }
 
@@ -100,7 +101,7 @@ function generateRandomKeys(): [number, number, number, number, number] {
  * リクエスト例:
  * ```json
  * {
- *   "moodType": "happy",
+ *   "moodType": "relax",
  *   "contents": "今日は素敵なカフェを見つけました！",
  *   "placeId": "12345",
  *   "imageUrl": "https://example.com/photo.jpg"
@@ -113,7 +114,7 @@ function generateRandomKeys(): [number, number, number, number, number] {
  *   "success": true,
  *   "data": {
  *     "id": "67890",
- *     "moodType": "happy",
+ *     "moodType": "relax",
  *     "contents": "今日は素敵なカフェを見つけました！",
  *     "imageUrl": "https://example.com/photo.jpg",
  *     "placeId": "12345",

@@ -5,8 +5,12 @@ export type CreatePostRequestBody = {
   imageUrl?: unknown;
 };
 
+export const ALLOWED_MOOD_TYPES = ["relax", "focus", "idea", "chat"] as const;
+
+export type MoodType = (typeof ALLOWED_MOOD_TYPES)[number];
+
 export type ParsedCreatePostBody = {
-  moodType: string;
+  moodType: MoodType;
   contents: string;
   placeId: bigint;
   imageUrl: string | null;
