@@ -13,10 +13,10 @@ export default function Header() {
   // ページパスに対応するタイトルマッピング
   const pageTitle: Record<string, string> = {
     // "/": "トップ",
-    "/home": "フィード",
+    [ROUTES.home]: "フィード",
     // "/login": "ログイン",
     // "/signup": "会員登録",
-    "/map": "マップ",
+    [ROUTES.map]: "マップ",
     // "/notification": "通知",
     // "/settings": "設定",
     // "/profile": "プロフィール",
@@ -47,7 +47,7 @@ export default function Header() {
         <div className="grid grid-cols-[auto_1fr_auto] items-center">
           {/* 左: ロゴ */}
           <div className="justify-self-start">
-            <Link href="/home" className="flex items-center gap-2">
+            <Link href={ROUTES.home} className="flex items-center gap-2">
               <Image
                 src="/logo.webp"
                 alt={APP_NAME}

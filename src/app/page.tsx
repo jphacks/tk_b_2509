@@ -2,6 +2,7 @@ import { ArrowRight, MessageSquare, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { APP_NAME } from "@/consts/APP_NAME";
+import { ROUTES } from "@/consts/ROUTES";
 
 export default function Home() {
   return (
@@ -58,7 +59,7 @@ function HeroSection() {
           <ArrowRight className="ml-2 w-5 h-5" />
         </Link>
         <Link
-          href="/home"
+          href={ROUTES.home}
           className="px-6 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100"
         >
           スポットを見る
