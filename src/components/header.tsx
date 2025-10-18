@@ -60,8 +60,7 @@ export default function Header() {
         {/* PC: 3カラムレイアウト */}
         <div className="hidden lg:grid lg:grid-cols-3 items-center gap-4">
           {/* 左: 空白 */}
-          <div className="flex justify-start">
-          </div>
+          <div className="flex justify-start"></div>
 
           {/* 中央: ページタイトル（トップでは非表示） */}
           <div className="flex justify-center">

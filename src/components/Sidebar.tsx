@@ -35,7 +35,7 @@ export default function Sidebar() {
 
   return (
     <aside className="hidden md:fixed md:left-0 md:top-0 md:h-screen md:bg-white md:flex md:flex-col md:gap-2 md:z-50 md:w-24 md:border-r md:border-slate-200 md:items-center md:p-2 lg:w-24 lg:items-center lg:p-2">
-      {/* ロゴ: タブレット＆PC両方でアイコン下に文字を表示 */}
+      {/* ロゴ: タブレット＆PC両方でアイコンのみ表示 */}
       <Link
         href={ROUTES.home}
         className="flex flex-col items-center gap-2 md:mb-8 lg:mb-8 md:pt-4 lg:pt-4"
@@ -47,9 +47,6 @@ export default function Sidebar() {
           height={32}
           className="object-contain"
         />
-        <span className="hidden lg:inline text-xs font-bold text-slate-900 text-center">
-          {APP_NAME}
-        </span>
       </Link>
 
       <nav className="flex flex-col gap-2 w-full">
