@@ -75,11 +75,11 @@ model Reaction {
   created_at    DateTime @default(now())
 
   // リアクション対象のPost
-  postId Int
+  postId BigInt
   post   Post @relation(fields: [postId], references: [id])
 
   // リアクションしたUser
-  userId Int
+  userId BigInt
   user   User @relation(fields: [userId], references: [id])
 
   // 1ユーザ1投稿1リアクション制約
