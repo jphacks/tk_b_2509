@@ -59,7 +59,7 @@ function HeroSection() {
           <ArrowRight className="ml-2 w-5 h-5" />
         </Link>
         <Link
-          href={ROUTES.home}
+          href={ROUTES.map}
           className="px-6 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100"
         >
           スポットを見る
