@@ -65,22 +65,35 @@ export async function getFeedLogic(
       author: { select: { name: true, avatar: true } },
       _count: { select: { reactions: true } },
     },
-  });
+  }) as unknown as Array<{
+    id: bigint;
+    mood_type: string;
+    contents: string;
+    img: string | null;
+    random_key_1: number;
+    random_key_2: number;
+    random_key_3: number;
+    random_key_4: number;
+    random_key_5: number;
+    place: { name: string };
+    author: { name: string; avatar: string | null };
+    _count: { reactions: number };
+  }>;
 
   // 2. 次ページのカーソルを決定 (route.tsからロジックを移動)
   let nextCursor: number | null = null;
   if (postsFromDb.length > limit) {
     const lastPost = postsFromDb.pop();
     if (lastPost) {
-      nextCursor = lastPost[sortBy];
+      nextCursor = lastPost[sortBy] as number;
     }
   }
 
   // 3. フロントエンド用に整形 (route.tsからロジックを移動)
   const formattedPosts: PostData[] = postsFromDb.map((post) => ({
-    id: post.id.toString(), // BigIntをstringに
+    id: Number(post.id), // BigIntをnumberに
     placeName: post.place.name,
-    moodType: post.mood_type, // mood_type -> moodType
+    moodType: post.mood_type as MoodType, // mood_type -> moodType
     contents: post.contents,
     imageUrl: post.img,
     reactionCount: post._count.reactions,
