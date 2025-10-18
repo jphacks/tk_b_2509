@@ -16,7 +16,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, password }),
@@ -24,8 +24,15 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.message || "ログインに失敗しました");
+        setError(data.error || "ログインに失敗しました");
         return;
+      }
+
+      const data = await response.json();
+
+      // トークンをlocalStorageに保存
+      if (data.token) {
+        localStorage.setItem("token", data.token);
       }
 
       router.push("/home");
