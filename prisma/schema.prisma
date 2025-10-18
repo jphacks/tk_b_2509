@@ -14,10 +14,69 @@ datasource db {
 }
 
 model User {
-  id       BigInt  @id @default(sequence()) // CockroachDBの疑似auto-increment
-  name     String  @unique
-  password String
-  avatar   String?
+  id         BigInt   @id @default(sequence())
+  name       String   @unique
+  password   String
+  avatar     String?
+  createdAt  DateTime @default(now())
+  lastLogin  DateTime?
+
+  posts      Post[]
+  reactions  Reaction[]
+  views      PostView[]
 
   @@map("Users")
+}
+
+model Place {
+  id        BigInt   @id @default(sequence())
+  name      String
+  lat       Decimal  @db.Decimal(9, 6)
+  lng       Decimal  @db.Decimal(9, 6)
+  place_id  String?  @db.VarChar(255)
+  posts     Post[]
+
+  @@map("Places")
+}
+
+model Post {
+  id          BigInt   @id @default(sequence())
+  mood_type   String
+  contents    String
+  place_id    BigInt
+  post_by     BigInt
+  post_at     DateTime @default(now())
+  views_count Int      @default(0)
+
+  place       Place   @relation(fields: [place_id], references: [id])
+  author      User    @relation(fields: [post_by], references: [id])
+  reactions   Reaction[]
+  views       PostView[]
+
+  @@map("Posts")
+}
+
+model Reaction {
+  id            BigInt   @id @default(sequence())
+  post_id       BigInt
+  user_id       BigInt
+  reaction_type String
+  created_at    DateTime @default(now())
+
+  post          Post @relation(fields: [post_id], references: [id])
+  user          User @relation(fields: [user_id], references: [id])
+
+  @@unique([post_id, user_id])
+  @@map("Reactions")
+}
+
+model PostView {
+  post_id BigInt
+  user_id BigInt
+
+  post    Post @relation(fields: [post_id], references: [id])
+  user    User @relation(fields: [user_id], references: [id])
+
+  @@id([post_id, user_id])
+  @@map("PostViews")
 }
