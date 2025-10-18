@@ -92,6 +92,36 @@ function generateRandomKeys(): [number, number, number, number, number] {
   ];
 }
 
+/**
+ * 投稿作成API
+ * POST /api/post/createPost
+ * 認証必須（Cookie もしくは Authorization ヘッダー）
+ *
+ * リクエスト例:
+ * ```json
+ * {
+ *   "moodType": "happy",
+ *   "contents": "今日は素敵なカフェを見つけました！",
+ *   "placeId": "12345",
+ *   "imageUrl": "https://example.com/photo.jpg"
+ * }
+ * ```
+ *
+ * 成功時レスポンス例:
+ * ```json
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "id": "67890",
+ *     "moodType": "happy",
+ *     "contents": "今日は素敵なカフェを見つけました！",
+ *     "imageUrl": "https://example.com/photo.jpg",
+ *     "placeId": "12345",
+ *     "postedAt": "2024-01-01T12:34:56.000Z"
+ *   }
+ * }
+ * ```
+ */
 export async function POST(request: NextRequest) {
   const authResult = requireAuth(request);
   if (!authResult.isAuthenticated || !authResult.user) {
