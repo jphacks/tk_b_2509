@@ -1,40 +1,19 @@
 "use client";
 
-import { ReviewCard } from "@/components/post/ReviewCard";
+import type { PostFormData } from "@/components/post";
 import { PostDialog } from "@/components/post";
+import { ReviewCard } from "@/components/post/ReviewCard";
+import { type ApiResponse, fetchPosts, getRandomSortKey } from "@/lib/feed";
+import { getAvatarFallback } from "@/lib/utils";
 import { Loader2, Plus } from "lucide-react"; // shadcn/ui 標準のスピナーアイコン
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer"; // 無限スクロール用
-import type { PostFormData } from "@/components/post";
 
-// import { PostData } from "@/types"; // 型定義をインポート
-
-/* --- 型定義 (page.tsx と同じもの) --- */
-interface PostData {
-  id: number;
-  placeName: string;
-  mood_type: string;
-  contents: string;
-  imageUrl: string | null;
-  reactionCount: number;
-  userAvatarUrl: string | null;
-  username: string;
-}
-
-/* --- ヘルパー関数 (page.tsx と同じもの) --- */
-function getAvatarFallback(username: string): string {
-  if (!username) return "??";
-  return username.substring(0, 2).toUpperCase();
-}
-
-// このコンポーネントが受け取る Props の型
-interface FeedListProps {
-  initialPosts: PostData[];
-}
-
-export function FeedList({ initialPosts }: FeedListProps) {
+export function FeedList({ posts, nextPageState }: ApiResponse) {
   // 1. 投稿リストの状態管理
-  const [posts, setPosts] = useState(initialPosts);
+  const [postList, setPostList] = useState(posts);
+  const [cursor, setCursor] = useState<number | undefined>(nextPageState.cursor ?? undefined);
+  const [sortBy, setSortBy] = useState<string>(nextPageState.sortBy);
 
   // 2. 「引っ張って更新」用の状態管理
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -56,13 +35,19 @@ export function FeedList({ initialPosts }: FeedListProps) {
         event.preventDefault(); // デフォルトのスクロール動作をキャンセル
 
         setIsRefreshing(true);
-        console.log("更新fetch"); // ★ 更新処理の実行
+        
+        setSortBy((prev) => {
+          const newSortKey = getRandomSortKey([prev]);
+          return newSortKey;
+        });
 
-        // (ダミー) 2秒後に更新完了
-        setTimeout(() => {
+        fetchPosts(sortBy, 10, undefined).then((data) => {
+          setPostList(data.posts);
+          setCursor(undefined);
           setIsRefreshing(false);
-          // 本来はここで fetch した新データで setPosts(newPosts) する
-        }, 2000);
+        }).catch(() => {
+          setIsRefreshing(false);
+        });
       }
     };
 
@@ -80,27 +65,18 @@ export function FeedList({ initialPosts }: FeedListProps) {
     // 監視対象が見えて、かつ更新中でない（多重フェッチ防止）
     if (loadMoreInView && !isRefreshing) {
       console.log("追加fetch"); // ★ 追加フェッチ処理の実行
-
-      // (ダミー) ここで fetch した追加データ (newPosts) を
-      // setPosts((prevPosts) => [...prevPosts, ...newPosts]);
-      // のようにして既存のリストに追加する
-
-      // (例) ダミーデータを1件追加するデモ
-      const newPost: PostData = {
-        id: Math.random(), // IDはユニークにする
-        placeName: "追加読み込みされたカフェ",
-        mood_type: "demo",
-        contents: "これは無限スクロールで追加された投稿です。",
-        imageUrl: null,
-        reactionCount: 0,
-        userAvatarUrl: null,
-        username: "System",
-      };
-
-      // 1秒後にダミーデータを追加
-      setTimeout(() => {
-        setPosts((prevPosts) => [...prevPosts, newPost]);
-      }, 1000);
+      setIsRefreshing(true); // フェッチ中フラグを立てる
+      if (cursor === undefined) {
+        setIsRefreshing(false); // カーソルがない場合は何もしない
+        return;
+      }
+      fetchPosts(sortBy, 10, cursor).then((data) => {
+        setPostList((prevPosts) => [...prevPosts, ...data.posts]);
+        setCursor(data.nextPageState.cursor ?? undefined);
+        setIsRefreshing(false); // フェッチ完了でフラグを下ろす
+      }).catch(() => {
+        setIsRefreshing(false); // エラー時もフラグを下ろす
+      });
     }
   }, [loadMoreInView, isRefreshing]);
 
@@ -139,7 +115,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
           */}
         </div>
       {/* 8. 投稿リストの表示 */}
-      {posts.map((post) => (
+      {postList.map((post) => (
         <ReviewCard
           key={post.id}
           placeName={post.placeName}

@@ -82,7 +82,7 @@ export async function GET(request: Request) {
       return {
         id: post.id.toString(), // BigInt を String に変換
         placeName: post.place.name,
-        mood_type: post.mood_type,
+        moodType: post.mood_type,
         contents: post.contents, // 'reviewText' から 'contents' に変更
         imageUrl: post.img, // null の可能性がある
         reactionCount: post._count.reactions,
