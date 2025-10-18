@@ -1,11 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
 
 export default function Header() {
   const pathname = usePathname();
+  const isRoot = pathname === "/";
 
   // ページパスに対応するタイトルマッピング
   const pageTitle: Record<string, string> = {
@@ -31,39 +32,69 @@ export default function Header() {
         return title;
       }
     }
-    return "CocoWork";
+    return "SerenSpot";
   };
 
-  // ログイン、会員登録、ルートページではヘッダーを表示しない
-  if (pathname === "/" || pathname === "/login" || pathname === "/signup") {
+  // ログイン、会員登録ページではヘッダーを表示しない
+  if (pathname === "/login" || pathname === "/signup") {
     return null;
   }
 
   return (
     <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
       <div className="max-w-full px-4 py-3">
-        <div className="flex items-center justify-center relative">
-          {/* ロゴ・アイコン部分（左に固定） */}
-          <div className="absolute left-0">
-            <Link
-              href="/home"
-              className="flex items-center gap-2 flex-shrink-0"
-            >
+        <div className="grid grid-cols-[auto_1fr_auto] items-center">
+          {/* 左: ロゴ */}
+          <div className="justify-self-start">
+            <Link href="/home" className="flex items-center gap-2">
               <Image
                 src="/logo.webp"
-                alt="CocoWork"
-                width={36}
-                height={36}
+                alt="SerenSpot"
+                width={32}
+                height={32}
                 className="object-contain"
               />
               <span className="text-base font-bold text-slate-900 hidden sm:inline">
-                CocoWork
+                SerenSpot
               </span>
             </Link>
           </div>
 
-          {/* ページタイトル部分（真ん中） */}
-          <h1 className="text-xl font-bold text-slate-900">{getPageTitle()}</h1>
+          {/* 中央: ページタイトル（トップでは非表示） */}
+          <div className="justify-self-center">
+            {!isRoot && (
+              <h1 className="text-xl font-bold text-slate-900">
+                {getPageTitle()}
+              </h1>
+            )}
+          </div>
+
+          {/* 右: アクション */}
+          <div className="justify-self-end flex items-center gap-3">
+            {isRoot ? (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-slate-700 hover:text-slate-900"
+                >
+                  ログイン
+                </Link>
+                <Link
+                  href="/signup"
+                  className="px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                >
+                  会員登録
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="text-sm font-medium text-slate-700 hover:text-slate-900"
+              >
+                ログイン
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </header>
