@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/header";
 import "./globals.css";
+import { APP_NAME } from "@/consts/APP_NAME";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SerenSpot",
-  description: "SerenSpot - 作業スポットをシェアしよう。",
+  title: {APP_NAME},
+  description: `${APP_NAME} - 作業スポットをシェアしよう。`,
 };
 
 export default function RootLayout({

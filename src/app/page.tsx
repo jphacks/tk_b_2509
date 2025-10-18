@@ -1,6 +1,7 @@
 import { ArrowRight, MessageSquare, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { APP_NAME } from "@/consts/APP_NAME";
 
 export default function Home() {
   return (
@@ -72,7 +73,7 @@ function FeaturesSection() {
     <section className="py-16 px-4 bg-slate-50">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-12">
-          SerenSpotの特徴
+          {APP_NAME}の特徴
         </h2>
         <div className="grid md:grid-cols-2 gap-6">
           <FeatureCard
@@ -124,14 +125,16 @@ function Footer() {
         <div className="flex items-center justify-center gap-2 mb-2">
           <Image
             src="/logo.webp"
-            alt="SerenSpot"
+            alt={APP_NAME}
             width={20}
             height={20}
             className="w-5 h-5"
           />
-          <span className="font-semibold text-slate-700">SerenSpot</span>
+          <span className="font-semibold text-slate-700">{APP_NAME}</span>
         </div>
-        <p>© {new Date().getFullYear()} SerenSpot. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+        </p>
       </div>
     </footer>
   );
