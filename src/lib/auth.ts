@@ -1,24 +1,36 @@
+import { createHash, randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// JWTシークレットの設定（環境変数から取得）
 const JWT_SECRET_FROM_ENV = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
-const DEFAULT_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+const ACCESS_TOKEN_EXPIRES_IN_ENV = process.env.JWT_ACCESS_EXPIRES_IN || "15m";
+const REFRESH_TOKEN_EXPIRES_IN_ENV =
+  process.env.JWT_REFRESH_EXPIRES_IN || "30d";
 
-export const AUTH_COOKIE_NAME = "jwt";
+const DEFAULT_ACCESS_MAX_AGE_SECONDS = 60 * 15; // 15 minutes
+const DEFAULT_REFRESH_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
-const AUTH_COOKIE_BASE_OPTIONS = Object.freeze({
+export const ACCESS_TOKEN_COOKIE_NAME = "access_token";
+export const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
+export const REFRESH_TOKEN_COOKIE_PATH = "/api/auth/refresh";
+
+const COOKIE_BASE = Object.freeze({
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
   path: "/",
 });
 
-// `jsonwebtoken` の `expiresIn` とCookieのmaxAgeを整合させる
-function expiresInToMaxAge(value: jwt.SignOptions["expiresIn"]): number | null {
+// `jsonwebtoken` の `expiresIn` を秒数に変換
+function expiresInToSeconds(
+  value: jwt.SignOptions["expiresIn"],
+): number | null {
   if (typeof value === "number") {
     return value;
+  }
+
+  if (typeof value !== "string") {
+    return null;
   }
 
   const match = /^(\d+)([dhms])$/.exec(value);
@@ -55,79 +67,163 @@ function resolveJwtSecret(): string {
   return "development-secret";
 }
 
-// JWT_EXPIRES_INのバリデーション（数値または文字列 "d", "h", "m", "s" を含むかチェック）
 function validateExpiresIn(value: string): jwt.SignOptions["expiresIn"] {
-  // 数値の場合はそのまま返す
   if (/^\d+$/.test(value)) {
     return Number(value);
   }
-  // 1d, 7d, 12h, 30m, 45s などの形式を許可
   if (/^\d+[dhms]$/.test(value)) {
     return value as jwt.SignOptions["expiresIn"];
   }
-  // デフォルト値
   return "7d";
 }
 
-const validatedExpiresIn = validateExpiresIn(JWT_EXPIRES_IN);
-const resolvedCookieMaxAge =
-  expiresInToMaxAge(validatedExpiresIn) ?? DEFAULT_COOKIE_MAX_AGE_SECONDS;
+const validatedAccessExpiresIn = validateExpiresIn(ACCESS_TOKEN_EXPIRES_IN_ENV);
+const validatedRefreshExpiresIn = validateExpiresIn(
+  REFRESH_TOKEN_EXPIRES_IN_ENV,
+);
 
-export const AUTH_COOKIE_OPTIONS = Object.freeze({
-  ...AUTH_COOKIE_BASE_OPTIONS,
-  maxAge: resolvedCookieMaxAge,
+const ACCESS_TOKEN_MAX_AGE =
+  expiresInToSeconds(validatedAccessExpiresIn) ??
+  DEFAULT_ACCESS_MAX_AGE_SECONDS;
+const REFRESH_TOKEN_MAX_AGE =
+  expiresInToSeconds(validatedRefreshExpiresIn) ??
+  DEFAULT_REFRESH_MAX_AGE_SECONDS;
+
+export const ACCESS_COOKIE_OPTIONS = Object.freeze({
+  ...COOKIE_BASE,
+  maxAge: ACCESS_TOKEN_MAX_AGE,
 });
 
-/**
- * パスワードをハッシュ化する関数
- */
-export async function hashPassword(password: string): Promise<string> {
+export const REFRESH_COOKIE_OPTIONS = Object.freeze({
+  ...COOKIE_BASE,
+  sameSite: "strict" as const,
+  path: REFRESH_TOKEN_COOKIE_PATH,
+  maxAge: REFRESH_TOKEN_MAX_AGE,
+});
+
+export const CLEAR_ACCESS_COOKIE_OPTIONS = Object.freeze({
+  ...ACCESS_COOKIE_OPTIONS,
+  maxAge: 0,
+});
+
+export const CLEAR_REFRESH_COOKIE_OPTIONS = Object.freeze({
+  ...REFRESH_COOKIE_OPTIONS,
+  maxAge: 0,
+});
+
+export type AccessTokenClaims = jwt.JwtPayload & {
+  sub: string;
+  name: string;
+  sid: string;
+};
+
+export type RefreshTokenClaims = jwt.JwtPayload & {
+  sub: string;
+  name: string;
+  jti: string;
+  sid: string;
+};
+
+export type TokenIssueResult = {
+  token: string;
+  expiresAt: Date;
+};
+
+export function hashPassword(password: string): Promise<string> {
   const saltRounds = 12;
   return bcrypt.hash(password, saltRounds);
 }
 
-/**
- * パスワードを検証する関数
- */
-export async function verifyPassword(
+export function verifyPassword(
   password: string,
   hashedPassword: string,
 ): Promise<boolean> {
   return bcrypt.compare(password, hashedPassword);
 }
 
-/**
- * JWTトークンを生成する関数
- */
-export function generateToken(payload: {
-  userId: string | number;
-  name: string;
-}): string {
-  const options: jwt.SignOptions = {
-    expiresIn: validatedExpiresIn,
-  };
-  return jwt.sign(payload, resolveJwtSecret(), options);
+function resolveExpiryDate(maxAgeSeconds: number): Date {
+  return new Date(Date.now() + maxAgeSeconds * 1000);
 }
 
-/**
- * JWTトークンを検証する関数
- */
-export function verifyToken(
-  token: string,
-): { userId: string | number; name: string } | null {
+export function generateAccessToken(args: {
+  userId: string | number;
+  name: string;
+  sessionId: string;
+}): TokenIssueResult {
+  const payload = {
+    sub: `${args.userId}`,
+    name: args.name,
+    sid: args.sessionId,
+  };
+  const token = jwt.sign(payload, resolveJwtSecret(), {
+    expiresIn: validatedAccessExpiresIn,
+    jwtid: randomUUID(),
+  });
+  return {
+    token,
+    expiresAt: resolveExpiryDate(ACCESS_TOKEN_MAX_AGE),
+  };
+}
+
+export function generateRefreshToken(args: {
+  userId: string | number;
+  name: string;
+  sessionId: string;
+}): TokenIssueResult {
+  const payload = {
+    sub: `${args.userId}`,
+    name: args.name,
+    sid: args.sessionId,
+  };
+  const token = jwt.sign(payload, resolveJwtSecret(), {
+    expiresIn: validatedRefreshExpiresIn,
+    jwtid: args.sessionId,
+  });
+  return {
+    token,
+    expiresAt: resolveExpiryDate(REFRESH_TOKEN_MAX_AGE),
+  };
+}
+
+export function verifyAccessToken(token: string): AccessTokenClaims | null {
   try {
-    return jwt.verify(token, resolveJwtSecret()) as {
-      userId: string | number;
-      name: string;
-    };
+    return jwt.verify(token, resolveJwtSecret()) as AccessTokenClaims;
   } catch (_error) {
     return null;
   }
 }
 
-/**
- * 認証エラー用のレスポンスを生成する関数
- */
+export function verifyRefreshToken(token: string): RefreshTokenClaims | null {
+  try {
+    return jwt.verify(token, resolveJwtSecret()) as RefreshTokenClaims;
+  } catch (_error) {
+    return null;
+  }
+}
+
+export function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+export function createSessionMetadata(input: {
+  userAgent: string | null;
+  ip: string | null;
+}) {
+  const fingerprintSource = [input.ip?.trim(), input.userAgent?.trim()]
+    .filter(Boolean)
+    .join("|");
+
+  const fingerprintHash = fingerprintSource
+    ? hashToken(fingerprintSource)
+    : null;
+  const deviceLabel = input.userAgent ? input.userAgent.slice(0, 120) : null;
+
+  return {
+    fingerprintHash,
+    deviceLabel,
+  };
+}
+
 export function createAuthErrorResponse(message: string = "認証が必要です") {
   return {
     error: message,
@@ -140,19 +236,17 @@ type AuthUser = {
   name: string;
 };
 
-/**
- * 認証成功時のレスポンスを生成する関数
- */
-export function createAuthSuccessResponse(user: AuthUser, token: string) {
+export function createAuthSuccessResponse(
+  user: AuthUser,
+  accessToken: TokenIssueResult,
+) {
   return {
-    token,
+    token: accessToken.token,
+    tokenExpiresAt: accessToken.expiresAt.toISOString(),
     user,
   };
 }
 
-/**
- * AuthorizationヘッダーからBearerトークンを抽出する関数
- */
 export function extractTokenFromHeader(
   header: string | null | undefined,
 ): string | null {

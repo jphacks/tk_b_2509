@@ -25,12 +25,35 @@ model User {
   created_at    DateTime   @default(now())
   last_login_at DateTime   @default(now())
 
+  sessions UserSession[]
+
   // Userが作成したPost
   posts     Post[]
   // Userが行ったReaction
   reactions Reaction[]
   // Userの閲覧履歴
   views     PostView[]
+}
+
+model UserSession {
+  id               String   @id
+  userId           BigInt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issued_at        DateTime @default(now())
+  expires_at       DateTime
+  revoked          Boolean  @default(false)
+  revoked_at       DateTime?
+  revoked_reason   String?
+  last_used_at     DateTime?
+  refresh_token_hash String
+  fingerprint_hash String?
+  device_label     String?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([expires_at])
+  @@index([revoked])
 }
 
 // 場所の管理用
