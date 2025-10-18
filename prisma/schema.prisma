@@ -75,6 +75,7 @@ model Post {
   contents    String
   post_at     DateTime @default(now())
   views_count Int      @default(0)
+  img         String?
 
   random_key_1 Float
   random_key_2 Float
