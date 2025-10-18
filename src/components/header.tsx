@@ -58,9 +58,9 @@ export default function Header() {
         </div>
 
         {/* PC: 3カラムレイアウト */}
-        <div className="hidden md:grid md:grid-cols-[auto_1fr_auto] items-center">
+        <div className="hidden md:grid md:grid-cols-3 items-center gap-4">
           {/* 左: ロゴ */}
-          <div className="justify-self-start">
+          <div className="flex justify-start">
             <Link href={ROUTES.home} className="flex items-center gap-2">
               <Image
                 src="/logo.webp"
@@ -76,17 +76,17 @@ export default function Header() {
           </div>
 
           {/* 中央: ページタイトル（トップでは非表示） */}
-          <div className="justify-self-center">
+          <div className="flex justify-center">
             {!isRoot && (
-              <h1 className="text-xl font-bold text-slate-900">
+              <h1 className="text-xl font-bold text-slate-900 truncate">
                 {getPageTitle()}
               </h1>
             )}
           </div>
 
           {/* 右: アクション */}
-          <div className="justify-self-end flex items-center gap-3">
-            {isRoot ? (
+          <div className="flex justify-end items-center gap-3">
+            {isRoot && (
               <>
                 <Link
                   href={ROUTES.login}
@@ -101,13 +101,6 @@ export default function Header() {
                   会員登録
                 </Link>
               </>
-            ) : (
-              <Link
-                href={ROUTES.login}
-                className="text-sm font-medium text-slate-700 hover:text-slate-900"
-              >
-                ログイン
-              </Link>
             )}
           </div>
         </div>
