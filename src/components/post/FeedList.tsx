@@ -106,7 +106,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
 
   return (
     <>
-      <div className="flex flex-col items-center space-y-6 pb-24 md:pb-0">
+      <div className="flex flex-col items-center space-y-6 pb-24 md:pb-0 md:ml-24 lg:ml-48">
         {/* 7. 「引っ張って更新」用のスピナー */}
         {isRefreshing && (
           <div className="py-4">

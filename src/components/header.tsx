@@ -58,7 +58,7 @@ export default function Header() {
         </div>
 
         {/* PC: 3カラムレイアウト */}
-        <div className="hidden md:grid md:grid-cols-3 items-center gap-4">
+        <div className="hidden lg:grid lg:grid-cols-3 items-center gap-4">
           {/* 左: ロゴ */}
           <div className="flex justify-start">
             <Link href={ROUTES.home} className="flex items-center gap-2">
