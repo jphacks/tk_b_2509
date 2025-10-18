@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 export default function Header() {
   const pathname = usePathname();
@@ -48,10 +49,12 @@ export default function Header() {
               href="/home"
               className="flex items-center gap-2 flex-shrink-0"
             >
-              <img
+              <Image
                 src="/logo.webp"
                 alt="CocoWork"
-                className="w-9 h-9 object-contain"
+                width={36}
+                height={36}
+                className="object-contain"
               />
               <span className="text-base font-bold text-slate-900 hidden sm:inline">
                 CocoWork
