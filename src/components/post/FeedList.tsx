@@ -121,7 +121,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
           reviewText={post.contents}
           imageUrl={post.imageUrl}
           reactionCount={post.reactionCount}
-          userAvatarUrl={post.userAvatarUrl ?? undefined}
+          userAvatarUrl={post.userAvatarUrl}
           userAvatarFallback={getAvatarFallback(post.username)}
           username={post.username}
         />

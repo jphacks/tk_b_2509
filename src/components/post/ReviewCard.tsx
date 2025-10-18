@@ -21,7 +21,7 @@ interface ReviewCardProps {
   reviewText: string;
   imageUrl?: string | null; // 画像はオプショナル（無い場合がある）
   reactionCount: number;
-  userAvatarUrl: string;
+  userAvatarUrl: string | null;
   userAvatarFallback: string; // アバター画像読み込み失敗時の表示（例: "田中" -> "TN"）
   username: string;
   className?: string; // 外部から追加のCSSクラスを渡せるように
@@ -142,7 +142,7 @@ export function ReviewCard({
         {/* 投稿ユーザー */}
         <div className="flex items-center gap-2">
           <Avatar className="w-6 h-6">
-            <AvatarImage src={userAvatarUrl} alt={username} />
+            <AvatarImage src={userAvatarUrl ?? undefined} alt={username} />
             <AvatarFallback>{userAvatarFallback}</AvatarFallback>
           </Avatar>
           <span className="text-sm font-medium text-muted-foreground">
