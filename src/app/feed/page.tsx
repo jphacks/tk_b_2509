@@ -4,7 +4,7 @@ import { FeedList } from "@/components/post/FeedList";
 
 /* --- 型定義 (このファイルに直接書く場合) --- */
 interface PostData {
-  id: number;
+  id: string;
   placeName: string;
   mood_type: string;
   contents: string;
@@ -23,11 +23,11 @@ async function fetchPosts(): Promise<PostData[]> {
 
   // --- 本来はここでDBからデータを取得する ---
   // const data = await db.posts.findMany(...);
-  
+
   // --- ここから下はダミーデータです ---
   const dummyData: PostData[] = [
     {
-      id: 1,
+      id: "1",
       placeName: "スターバックス 渋谷TSUTAYA店",
       mood_type: "focus", // バッジ用のデータ
       contents:
@@ -39,7 +39,7 @@ async function fetchPosts(): Promise<PostData[]> {
       username: "shadcn_fan",
     },
     {
-      id: 2,
+      id: "2",
       placeName: "近所の公民館の図書室",
       mood_type: "quiet", // バッジ用のデータ
       contents:
@@ -50,7 +50,7 @@ async function fetchPosts(): Promise<PostData[]> {
       username: "vercel_user",
     },
     {
-      id: 3,
+      id: "3",
       placeName: "コメダ珈琲店",
       mood_type: "relax",
       contents: "シロノワールを食べながら作業。ソファ席が快適すぎる。",

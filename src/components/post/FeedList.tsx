@@ -1,17 +1,18 @@
 "use client";
 
-import { ReviewCard } from "@/components/post/ReviewCard";
-import { PostDialog } from "@/components/post";
 import { Loader2, Plus } from "lucide-react"; // shadcn/ui 標準のスピナーアイコン
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer"; // 無限スクロール用
 import type { PostFormData } from "@/components/post";
+import { PostDialog } from "@/components/post";
+import { ReviewCard } from "@/components/post/ReviewCard";
+import { createPost } from "@/lib/api/posts";
 
 // import { PostData } from "@/types"; // 型定義をインポート
 
 /* --- 型定義 (page.tsx と同じもの) --- */
 interface PostData {
-  id: number;
+  id: string;
   placeName: string;
   mood_type: string;
   contents: string;
@@ -34,7 +35,7 @@ interface FeedListProps {
 
 export function FeedList({ initialPosts }: FeedListProps) {
   // 1. 投稿リストの状態管理
-  const [posts, setPosts] = useState(initialPosts);
+  const [posts, setPosts] = useState<PostData[]>(initialPosts);
 
   // 2. 「引っ張って更新」用の状態管理
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -86,8 +87,11 @@ export function FeedList({ initialPosts }: FeedListProps) {
       // のようにして既存のリストに追加する
 
       // (例) ダミーデータを1件追加するデモ
+      const generatedId =
+        globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36);
+
       const newPost: PostData = {
-        id: Math.random(), // IDはユニークにする
+        id: generatedId, // 仮のID
         placeName: "追加読み込みされたカフェ",
         mood_type: "demo",
         contents: "これは無限スクロールで追加された投稿です。",
@@ -103,6 +107,14 @@ export function FeedList({ initialPosts }: FeedListProps) {
       }, 1000);
     }
   }, [loadMoreInView, isRefreshing]);
+
+  const fileToDataUrl = async (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+      reader.readAsDataURL(file);
+    });
 
   return (
     <>
@@ -124,7 +136,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
             imageUrl={post.imageUrl}
             reactionCount={post.reactionCount}
             userAvatarUrl={
-              post.userAvatarUrl ||
+              post.userAvatarUrl ??
               "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
             }
             userAvatarFallback={getAvatarFallback(post.username)}
@@ -138,34 +150,11 @@ export function FeedList({ initialPosts }: FeedListProps) {
             (例: !isRefreshing && loadMoreInView && <Loader2 ... />) 
           */}
         </div>
-        {/* 8. 投稿リストの表示 */}
-        {posts.map((post) => (
-          <ReviewCard
-            key={post.id}
-            placeName={post.placeName}
-            badgeUrl="/vercel.svg"
-            reviewText={post.contents}
-            imageUrl={post.imageUrl}
-            reactionCount={post.reactionCount}
-            userAvatarUrl={
-              post.userAvatarUrl ??
-              "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
-            }
-            userAvatarFallback={getAvatarFallback(post.username)}
-            username={post.username}
-          />
-        ))}
-
-        {/* 8. 「無限スクロール」用の監視対象要素 */}
-        <div ref={loadMoreRef} className="h-10 w-full">
-          {/* ここにもスピナーを置くことが多い
-          (例: !isRefreshing && loadMoreInView && <Loader2 ... />)
-        */}
-        </div>
       </div>
 
       {/* 浮動投稿ボタン（FAB） - モバイル向け */}
       <button
+        type="button"
         onClick={() => setIsPostDialogOpen(true)}
         className="
           fixed bottom-6 right-6 md:bottom-8 md:right-8
@@ -186,10 +175,30 @@ export function FeedList({ initialPosts }: FeedListProps) {
         isOpen={isPostDialogOpen}
         onClose={() => setIsPostDialogOpen(false)}
         onSubmit={async (data: PostFormData) => {
-          console.log("投稿データ:", data);
-          // 本来はここでサーバーに送信
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          alert("投稿しました！");
+          if (!data.placeId || !data.mood) {
+            throw new Error("スポットと気分を選択してください");
+          }
+
+          const imageUrl = data.image ? await fileToDataUrl(data.image) : null;
+          const createdPost = await createPost({
+            moodType: data.mood,
+            contents: data.text,
+            placeId: data.placeId,
+            imageUrl,
+          });
+
+          const newPost: PostData = {
+            id: createdPost.id,
+            placeName: createdPost.placeName,
+            mood_type: createdPost.moodType,
+            contents: createdPost.contents,
+            imageUrl: createdPost.imageUrl,
+            reactionCount: createdPost.reactionCount,
+            userAvatarUrl: createdPost.author.avatar,
+            username: createdPost.author.name,
+          };
+
+          setPosts((prev) => [newPost, ...prev]);
         }}
       />
     </>

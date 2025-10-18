@@ -118,6 +118,12 @@ function generateRandomKeys(): [number, number, number, number, number] {
  *     "contents": "今日は素敵なカフェを見つけました！",
  *     "imageUrl": "https://example.com/photo.jpg",
  *     "placeId": "12345",
+ *     "placeName": "東京駅",
+ *     "reactionCount": 0,
+ *     "author": {
+ *       "name": "Kevin",
+ *       "avatar": null
+ *     },
  *     "postedAt": "2024-01-01T12:34:56.000Z"
  *   }
  * }
@@ -170,7 +176,7 @@ export async function POST(request: NextRequest) {
   try {
     const place = await prisma.place.findUnique({
       where: { id: validatedBody.placeId },
-      select: { id: true },
+      select: { id: true, name: true },
     });
 
     if (!place) {
@@ -201,8 +207,18 @@ export async function POST(request: NextRequest) {
         mood_type: true,
         contents: true,
         img: true,
-        placeId: true,
         post_at: true,
+        author: {
+          select: {
+            name: true,
+            avatar: true,
+          },
+        },
+        _count: {
+          select: {
+            reactions: true,
+          },
+        },
       },
     });
 
@@ -214,8 +230,14 @@ export async function POST(request: NextRequest) {
           moodType: createdPost.mood_type,
           contents: createdPost.contents,
           imageUrl: createdPost.img,
-          placeId: createdPost.placeId.toString(),
+          placeId: place.id.toString(),
+          placeName: place.name,
           postedAt: createdPost.post_at.toISOString(),
+          reactionCount: createdPost._count.reactions,
+          author: {
+            name: createdPost.author.name,
+            avatar: createdPost.author.avatar,
+          },
         },
       },
       { status: 201 },
