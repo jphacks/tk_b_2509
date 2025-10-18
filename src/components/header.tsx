@@ -3,12 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogOut, User } from "lucide-react";
 import { APP_NAME } from "@/consts/APP_NAME";
 import { ROUTES } from "@/consts/ROUTES";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Header() {
   const pathname = usePathname();
   const isRoot = pathname === "/";
+  const { user, isLoading, isAuthenticated, logout } = useAuth();
 
   // ページパスに対応するタイトルマッピング
   const pageTitle: Record<string, string> = {
@@ -41,6 +44,72 @@ export default function Header() {
     return null;
   }
 
+  // 認証状態によるアクションのレンダリング
+  const renderAuthActions = () => {
+    if (isLoading) {
+      return (
+        <div className="w-8 h-8 bg-slate-200 rounded-full animate-pulse" />
+      );
+    }
+
+    if (isAuthenticated && user) {
+      return (
+        <div className="flex items-center gap-3">
+          {/* ユーザー情報ドロップダウン */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-blue-600" />
+            </div>
+            <span className="text-sm font-medium text-slate-700">
+              {user.name}
+            </span>
+          </div>
+
+          {/* ログアウトボタン */}
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+            title="ログアウト"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="text-sm font-medium hidden sm:inline">
+              ログアウト
+            </span>
+          </button>
+        </div>
+      );
+    }
+
+    // 未認証の場合
+    return (
+      <>
+        {isRoot ? (
+          <>
+            <Link
+              href={ROUTES.login}
+              className="text-sm font-medium text-slate-700 hover:text-slate-900"
+            >
+              ログイン
+            </Link>
+            <Link
+              href={ROUTES.signup}
+              className="px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+            >
+              会員登録
+            </Link>
+          </>
+        ) : (
+          <Link
+            href={ROUTES.login}
+            className="text-sm font-medium text-slate-700 hover:text-slate-900"
+          >
+            ログイン
+          </Link>
+        )}
+      </>
+    );
+  };
+
   return (
     <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
       <div className="max-w-full px-4 py-3">
@@ -70,31 +139,9 @@ export default function Header() {
             )}
           </div>
 
-          {/* 右: アクション */}
-          <div className="justify-self-end flex items-center gap-3">
-            {isRoot ? (
-              <>
-                <Link
-                  href={ROUTES.login}
-                  className="text-sm font-medium text-slate-700 hover:text-slate-900"
-                >
-                  ログイン
-                </Link>
-                <Link
-                  href={ROUTES.signup}
-                  className="px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
-                >
-                  会員登録
-                </Link>
-              </>
-            ) : (
-              <Link
-                href={ROUTES.login}
-                className="text-sm font-medium text-slate-700 hover:text-slate-900"
-              >
-                ログイン
-              </Link>
-            )}
+          {/* 右: 認証状態に応じたアクション */}
+          <div className="justify-self-end">
+            {renderAuthActions()}
           </div>
         </div>
       </div>
