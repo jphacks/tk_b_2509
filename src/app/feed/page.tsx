@@ -23,7 +23,7 @@ async function fetchPosts(): Promise<PostData[]> {
 
   // --- 本来はここでDBからデータを取得する ---
   // const data = await db.posts.findMany(...);
-  
+
   // --- ここから下はダミーデータです ---
   const dummyData: PostData[] = [
     {
@@ -72,7 +72,7 @@ export default async function FeedPage() {
   const initialPosts = await fetchPosts();
 
   return (
-    <div className="container mx-auto p-4 min-h-screen bg-background">
+    <div className="w-full p-4 min-h-screen bg-background">
       {/* 
         FeedList クライアントコンポーネントを呼び出し、
         初期データ (initialPosts) を props として渡す。
