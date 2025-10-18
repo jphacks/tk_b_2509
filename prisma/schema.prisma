@@ -61,15 +61,11 @@ model Place {
   id       BigInt     @id @default(sequence())
   name     String
   // GEOGRAPHY型(Point, SRID 4326)のカラムを追加
-  geom     Bytes      @db.Geography(Point, 4326) // <-- 追加
-
+  geom     Unsupported("GEOGRAPHY(Point,4326)")
   place_id String?
 
   // この場所に関連するPost
   posts Post[]
-
-  // 空間インデックス (Gistインデックス) を追加
-  @@index([geom], type: Gist) // <-- 追加
 }
 
 // 投稿の管理用
