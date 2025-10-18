@@ -55,11 +55,11 @@ model Post {
   views_count Int      @default(0)
 
   // 投稿場所 (Placeへのリレーション)
-  placeId Int
+  placeId BigInt
   place   Place @relation(fields: [placeId], references: [id])
 
   // 投稿者 (Userへのリレーション)
-  authorId Int
+  authorId BigInt
   author   User @relation(fields: [authorId], references: [id])
 
   // この投稿へのReaction
