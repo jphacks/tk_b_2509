@@ -60,8 +60,8 @@ model UserSession {
 model Place {
   id       BigInt     @id @default(sequence())
   name     String
-  lat      Decimal @db.Decimal(9, 6)
-  lng      Decimal @db.Decimal(9, 6)
+  // GEOGRAPHY型(Point, SRID 4326)のカラムを追加
+  geom     Unsupported("GEOGRAPHY(Point,4326)")
   place_id String?
 
   // この場所に関連するPost
