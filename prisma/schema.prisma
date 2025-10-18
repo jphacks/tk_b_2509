@@ -14,6 +14,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Mood {
+  relax
+  focus
+  idea
+  chat
+}
+
 // ユーザ管理 (ログイン, サインアップ)
 model User {
   id            BigInt    @id @default(sequence())
@@ -71,7 +78,7 @@ model Place {
 // 投稿の管理用
 model Post {
   id          BigInt      @id @default(sequence())
-  mood_type   String
+  mood_type   Mood
   contents    String
   post_at     DateTime @default(now())
   views_count Int      @default(0)
