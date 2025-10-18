@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import type { Mood, PostFormData } from "./types";
-import MoodSelector from "./MoodSelector";
-import ImageUpload from "./ImageUpload";
-
+import PostFormFields from "./PostFormFields";
 interface PostDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -96,86 +94,23 @@ export default function PostDialog({
           </button>
         </div>
 
-        <form
+        <PostFormFields
+          formData={formData}
+          isSubmitting={isSubmitting}
+          onSpotNameChange={handleSpotNameChange}
+          onTextChange={handleTextChange}
+          onMoodSelect={handleMoodSelect}
+          onImageSelect={handleImageSelect}
+          onCancel={onClose}
           onSubmit={handleSubmit}
-          className="flex flex-col flex-1 p-4 gap-4"
-        >
-          {/* スポット名 */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              スポット名 <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.spotName}
-              onChange={handleSpotNameChange}
-              placeholder="例: 〇〇カフェ、xx図書館"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* 気分選択 */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              気分を選択 <span className="text-red-500">*</span>
-            </label>
-            <MoodSelector
-              selectedMood={formData.mood}
-              onMoodSelect={handleMoodSelect}
-            />
-          </div>
-
-          {/* テキスト */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              コメント <span className="text-red-500">*</span>
-              <span className="ml-2 text-xs text-slate-500">
-                {formData.text.length}/60
-              </span>
-            </label>
-            <textarea
-              value={formData.text}
-              onChange={handleTextChange}
-              placeholder="この場所のおすすめポイント、雰囲気など"
-              maxLength={60}
-              rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            />
-          </div>
-
-          {/* 画像アップロード */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              写真 <span className="text-xs text-slate-500">(任意)</span>
-            </label>
-            <ImageUpload
-              selectedImage={formData.image}
-              onImageSelect={handleImageSelect}
-            />
-          </div>
-
-          {/* ボタン */}
-          <div className="flex gap-2 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-            >
-              キャンセル
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {isSubmitting ? "投稿中..." : "投稿"}
-            </button>
-          </div>
-        </form>
+        />
       </dialog>
 
       {/* モバイル: 下部シート */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="postSheetTitle"
         className="
           fixed bottom-0 left-0 right-0 md:hidden
           bg-white rounded-t-2xl shadow-2xl z-50
@@ -183,7 +118,10 @@ export default function PostDialog({
           max-h-[90vh] overflow-y-auto
         "
       >
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 sticky top-0 bg-white rounded-t-2xl">
+        <div
+          id="postSheetTitle"
+          className="flex items-center justify-between p-4 border-b border-slate-200 sticky top-0 bg-white rounded-t-2xl"
+        >
           <h2 className="text-lg font-bold text-slate-900">スポットを投稿</h2>
           <button
             onClick={onClose}
@@ -193,79 +131,18 @@ export default function PostDialog({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col p-4 gap-4 pb-8">
-          {/* スポット名 */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              スポット名 <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.spotName}
-              onChange={handleSpotNameChange}
-              placeholder="例: 〇〇カフェ、xx図書館"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* 気分選択 */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              気分を選択 <span className="text-red-500">*</span>
-            </label>
-            <MoodSelector
-              selectedMood={formData.mood}
-              onMoodSelect={handleMoodSelect}
-            />
-          </div>
-
-          {/* テキスト */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              コメント <span className="text-red-500">*</span>
-              <span className="ml-2 text-xs text-slate-500">
-                {formData.text.length}/60
-              </span>
-            </label>
-            <textarea
-              value={formData.text}
-              onChange={handleTextChange}
-              placeholder="この場所のおすすめポイント、雰囲気など"
-              maxLength={60}
-              rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            />
-          </div>
-
-          {/* 画像アップロード */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              写真 <span className="text-xs text-slate-500">(任意)</span>
-            </label>
-            <ImageUpload
-              selectedImage={formData.image}
-              onImageSelect={handleImageSelect}
-            />
-          </div>
-
-          {/* ボタン */}
-          <div className="flex gap-2 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-            >
-              キャンセル
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {isSubmitting ? "投稿中..." : "投稿"}
-            </button>
-          </div>
-        </form>
+        <div className="flex flex-col p-4 gap-4 pb-8">
+          <PostFormFields
+            formData={formData}
+            isSubmitting={isSubmitting}
+            onSpotNameChange={handleSpotNameChange}
+            onTextChange={handleTextChange}
+            onMoodSelect={handleMoodSelect}
+            onImageSelect={handleImageSelect}
+            onCancel={onClose}
+            onSubmit={handleSubmit}
+          />
+        </div>
       </div>
     </>
   );

@@ -5,6 +5,7 @@ import { PostDialog } from "@/components/post";
 import { Loader2, Plus } from "lucide-react"; // shadcn/ui 標準のスピナーアイコン
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer"; // 無限スクロール用
+import type { PostFormData } from "@/components/post";
 
 // import { PostData } from "@/types"; // 型定義をインポート
 
@@ -160,7 +161,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
       <PostDialog
         isOpen={isPostDialogOpen}
         onClose={() => setIsPostDialogOpen(false)}
-        onSubmit={async (data: any) => {
+        onSubmit={async (data: PostFormData) => {
           console.log("投稿データ:", data);
           // 本来はここでサーバーに送信
           await new Promise((resolve) => setTimeout(resolve, 1000));
