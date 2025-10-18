@@ -1,4 +1,4 @@
-import { GoogleMap, MapPin } from '../components/Map/GoogleMap';
+import { GoogleMap, MapPin } from '../../components/Map/GoogleMap';
 
 function App() {
   const samplePins: MapPin[] = [
