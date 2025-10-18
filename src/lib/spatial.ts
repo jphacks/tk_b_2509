@@ -29,8 +29,11 @@ export type PlaceWithLocation = {
   distanceMeters?: number;
 };
 
+const POINT_PATTERN =
+  /^POINT\s*\(\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*\)$/;
+
 const parsePointText = (geomText: string): PlaceLocation => {
-  const match = geomText.trim().match(/^POINT\(([-\d.]+) ([-\d.]+)\)$/);
+  const match = geomText.trim().match(POINT_PATTERN);
   if (!match) {
     throw new Error(`Invalid geometry text: ${geomText}`);
   }

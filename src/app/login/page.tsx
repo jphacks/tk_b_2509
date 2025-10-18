@@ -36,7 +36,7 @@ export default function LoginPage() {
         localStorage.setItem("token", data.token);
       }
 
-      router.push("/home");
+      router.push("/feed");
     } catch (err) {
       setError("エラーが発生しました");
       console.error(err);

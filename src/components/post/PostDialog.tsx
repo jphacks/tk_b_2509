@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { X } from "lucide-react";
-import type { Mood, PostFormData } from "./types";
+import { useEffect, useState } from "react";
 import PostFormFields from "./PostFormFields";
+import type { Mood, PlaceOption, PostFormData } from "./types";
+
 interface PostDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit?: (data: PostFormData) => Promise<void>;
 }
+
+const DEFAULT_PLACE_PARAMS = {
+  lat: 35.6812,
+  lng: 139.7671,
+  radius: 5000,
+};
 
 export default function PostDialog({
   isOpen,
@@ -16,18 +23,81 @@ export default function PostDialog({
   onSubmit,
 }: PostDialogProps) {
   const [formData, setFormData] = useState<PostFormData>({
+    placeId: null,
     spotName: "",
     mood: null,
     text: "",
     image: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [places, setPlaces] = useState<PlaceOption[]>([]);
+  const [placesLoading, setPlacesLoading] = useState(false);
+  const [placesError, setPlacesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    let cancelled = false;
+    const fetchPlaces = async () => {
+      setPlacesLoading(true);
+      setPlacesError(null);
+      try {
+        const params = new URLSearchParams({
+          lat: DEFAULT_PLACE_PARAMS.lat.toString(),
+          lng: DEFAULT_PLACE_PARAMS.lng.toString(),
+          radius: DEFAULT_PLACE_PARAMS.radius.toString(),
+        });
+        const response = await fetch(`/api/places?${params.toString()}`);
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => ({}));
+          throw new Error(errorBody.error || "場所の取得に失敗しました");
+        }
+        const body = await response.json();
+        const options: PlaceOption[] = Array.isArray(body?.data)
+          ? body.data.map((place: { id: number | string; name: string }) => ({
+              id: place.id.toString(),
+              name: place.name,
+            }))
+          : [];
+        if (!cancelled) {
+          setPlaces(options);
+          setFormData((prev) => {
+            if (
+              prev.placeId &&
+              options.some((option) => option.id === prev.placeId)
+            ) {
+              return prev;
+            }
+            return {
+              ...prev,
+              placeId: null,
+              spotName: "",
+            };
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPlacesError(
+            error instanceof Error ? error.message : "場所の取得に失敗しました",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setPlacesLoading(false);
+        }
+      }
+    };
+
+    void fetchPlaces();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const handleSpotNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, spotName: e.target.value }));
-  };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
@@ -44,10 +114,23 @@ export default function PostDialog({
     setFormData((prev) => ({ ...prev, image: file }));
   };
 
+  const handlePlaceSelect = (placeId: string | null) => {
+    if (!placeId) {
+      setFormData((prev) => ({ ...prev, placeId: null, spotName: "" }));
+      return;
+    }
+    const target = places.find((place) => place.id === placeId);
+    setFormData((prev) => ({
+      ...prev,
+      placeId,
+      spotName: target?.name ?? "",
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.spotName.trim() || !formData.mood || !formData.text.trim()) {
-      alert("スポット名、気分、テキストは必須です");
+    if (!formData.placeId || !formData.mood || !formData.text.trim()) {
+      alert("スポット、気分、テキストは必須です");
       return;
     }
 
@@ -57,11 +140,19 @@ export default function PostDialog({
         await onSubmit(formData);
       }
       // リセット
-      setFormData({ spotName: "", mood: null, text: "", image: null });
+      setFormData({
+        placeId: null,
+        spotName: "",
+        mood: null,
+        text: "",
+        image: null,
+      });
       onClose();
     } catch (error) {
       console.error("投稿エラー:", error);
-      alert("投稿に失敗しました");
+      const message =
+        error instanceof Error ? error.message : "投稿に失敗しました";
+      alert(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -70,7 +161,10 @@ export default function PostDialog({
   return (
     <>
       {/* バックドロップ */}
-      <div
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-hidden="true"
         className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
         onClick={onClose}
       />
@@ -87,6 +181,7 @@ export default function PostDialog({
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <h2 className="text-lg font-bold text-slate-900">スポットを投稿</h2>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
           >
@@ -97,7 +192,10 @@ export default function PostDialog({
         <PostFormFields
           formData={formData}
           isSubmitting={isSubmitting}
-          onSpotNameChange={handleSpotNameChange}
+          places={places}
+          placesLoading={placesLoading}
+          placesError={placesError}
+          onPlaceSelect={handlePlaceSelect}
           onTextChange={handleTextChange}
           onMoodSelect={handleMoodSelect}
           onImageSelect={handleImageSelect}
@@ -124,6 +222,7 @@ export default function PostDialog({
         >
           <h2 className="text-lg font-bold text-slate-900">スポットを投稿</h2>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
           >
@@ -135,7 +234,10 @@ export default function PostDialog({
           <PostFormFields
             formData={formData}
             isSubmitting={isSubmitting}
-            onSpotNameChange={handleSpotNameChange}
+            places={places}
+            placesLoading={placesLoading}
+            placesError={placesError}
+            onPlaceSelect={handlePlaceSelect}
             onTextChange={handleTextChange}
             onMoodSelect={handleMoodSelect}
             onImageSelect={handleImageSelect}
