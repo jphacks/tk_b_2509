@@ -15,7 +15,7 @@ export const runtime = "nodejs"; // Edge不可
  */
 export async function POST(request: NextRequest) {
   try {
-    const { name, password, avatar } = await request.json();
+    const { name, password, avatar, hometown } = await request.json();
 
     // バリデーション
     if (!name || !password) {
@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
         name,
         password: hashedPassword,
         avatar: avatar || null,
+        home_town: hometown || null,
         isValid: true,
         last_login_at: new Date(),
       },

@@ -85,7 +85,7 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/signup", {
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, password, hometown }),
@@ -93,8 +93,15 @@ export default function SignupPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.message || "登録に失敗しました");
+        setError(data.error || "登録に失敗しました");
         return;
+      }
+
+      const data = await response.json();
+
+      // トークンをlocalStorageに保存
+      if (data.token) {
+        localStorage.setItem("token", data.token);
       }
 
       router.push("/login");
