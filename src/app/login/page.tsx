@@ -24,12 +24,11 @@ export default function LoginPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        setError(data.error || "ログインに失敗しました");
+        const errorData = await response.json();
+        setError(errorData.error || "ログインに失敗しました");
         return;
       }
 
-      await response.json();
       const data = await response.json();
 
       // トークンをlocalStorageに保存

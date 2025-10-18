@@ -93,12 +93,11 @@ export default function SignupPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        setError(data.error || "登録に失敗しました");
+        const errorData = await response.json();
+        setError(errorData.error || "登録に失敗しました");
         return;
       }
 
-      await response.json();
       const data = await response.json();
 
       // トークンをlocalStorageに保存
