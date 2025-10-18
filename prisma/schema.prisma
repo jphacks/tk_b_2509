@@ -18,7 +18,7 @@ datasource db {
 
 // ユーザ管理 (ログイン, サインアップ)
 model User {
-  id            BingInt    @id @default(sequence())
+  id            BigInt    @id @default(sequence())
   name          String     @unique
   password      String
   avatar        String?
