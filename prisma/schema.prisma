@@ -4,6 +4,9 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,70 +16,86 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ユーザ管理 (ログイン, サインアップ)
 model User {
-  id         BigInt   @id @default(sequence())
-  name       String   @unique
-  password   String
-  avatar     String?
-  createdAt  DateTime @default(now())
-  lastLogin  DateTime?
+  id            BingInt    @id @default(sequence())
+  name          String     @unique
+  password      String
+  avatar        String?
+  isVaild       Boolean    @default(true)
+  created_at    DateTime   @default(now())
+  last_login_at DateTime   @default(now())
 
-  posts      Post[]
-  reactions  Reaction[]
-  views      PostView[]
-
-  @@map("Users")
-}
-
-model Place {
-  id        BigInt   @id @default(sequence())
-  name      String
-  lat       Decimal  @db.Decimal(9, 6)
-  lng       Decimal  @db.Decimal(9, 6)
-  place_id  String?  @db.VarChar(255)
+  // Userが作成したPost
   posts     Post[]
-
-  @@map("Places")
+  // Userが行ったReaction
+  reactions Reaction[]
+  // Userの閲覧履歴
+  views     PostView[]
 }
 
+// 場所の管理用
+model Place {
+  id       Int     @id @default(sequence())
+  name     String
+  lat      Decimal @db.Decimal(9, 6)
+  lng      Decimal @db.Decimal(9, 6)
+  place_id String?
+
+  // この場所に関連するPost
+  posts Post[]
+}
+
+// 投稿の管理用
 model Post {
-  id          BigInt   @id @default(sequence())
+  id          Int      @id @default(sequence())
   mood_type   String
   contents    String
-  place_id    BigInt
-  post_by     BigInt
   post_at     DateTime @default(now())
   views_count Int      @default(0)
 
-  place       Place   @relation(fields: [place_id], references: [id])
-  author      User    @relation(fields: [post_by], references: [id])
-  reactions   Reaction[]
-  views       PostView[]
+  // 投稿場所 (Placeへのリレーション)
+  placeId Int
+  place   Place @relation(fields: [placeId], references: [id])
 
-  @@map("Posts")
+  // 投稿者 (Userへのリレーション)
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id])
+
+  // この投稿へのReaction
+  reactions Reaction[]
+  // この投稿の閲覧履歴
+  views     PostView[]
 }
 
+// リアクション管理用
 model Reaction {
-  id            BigInt   @id @default(sequence())
-  post_id       BigInt
-  user_id       BigInt
+  id            Int      @id @default(sequence())
   reaction_type String
   created_at    DateTime @default(now())
 
-  post          Post @relation(fields: [post_id], references: [id])
-  user          User @relation(fields: [user_id], references: [id])
+  // リアクション対象のPost
+  postId Int
+  post   Post @relation(fields: [postId], references: [id])
 
-  @@unique([post_id, user_id])
-  @@map("Reactions")
+  // リアクションしたUser
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  // 1ユーザ1投稿1リアクション制約
+  @@unique([postId, userId])
 }
 
+// 閲覧履歴管理用 (1ユーザ1閲覧)
 model PostView {
-  post_id BigInt
-  user_id BigInt
+  // 閲覧されたPost
+  postId Int
+  post   Post @relation(fields: [postId], references: [id])
 
-  post    Post @relation(fields: [post_id], references: [id])
-  user    User @relation(fields: [user_id], references: [id])
+  // 閲覧したUser
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
 
-  @@id([post_id, user_id])
-  @@map("PostViews")
+  // 複合プライマリキー (これで1ユーザ1閲覧を保証)
+  @@id([postId, userId])
 }
