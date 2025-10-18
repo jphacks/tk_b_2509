@@ -1,6 +1,6 @@
+import { ALLOWED_SORT_KEYS, FormattedPost, SortKey } from '@/lib/feed-types';
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { ALLOWED_SORT_KEYS, SortKey, FormattedPost } from '@/lib/feed-types';
 
 const prisma = new PrismaClient();
 
