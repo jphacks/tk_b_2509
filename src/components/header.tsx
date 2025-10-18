@@ -59,20 +59,8 @@ export default function Header() {
 
         {/* PC: 3カラムレイアウト */}
         <div className="hidden lg:grid lg:grid-cols-3 items-center gap-4">
-          {/* 左: ロゴ */}
+          {/* 左: 空白 */}
           <div className="flex justify-start">
-            <Link href={ROUTES.home} className="flex items-center gap-2">
-              <Image
-                src="/logo.webp"
-                alt={APP_NAME}
-                width={40}
-                height={40}
-                className="object-contain"
-              />
-              <span className="text-lg font-bold text-slate-900">
-                {APP_NAME}
-              </span>
-            </Link>
           </div>
 
           {/* 中央: ページタイトル（トップでは非表示） */}
