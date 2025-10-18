@@ -73,10 +73,7 @@ export default async function FeedPage() {
 
   return (
     <div className="container mx-auto p-4 min-h-screen bg-background">
-      <h1 className="text-3xl font-bold mb-6">おすすめ作業場所フィード</h1>
-
-      {/* ★ 変更点：
-        ここで直接 .map() するのではなく、
+      {/* 
         FeedList クライアントコンポーネントを呼び出し、
         初期データ (initialPosts) を props として渡す。
         インタラクション（更新、追加読み込み）は FeedList が担当する。
