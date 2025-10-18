@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
 import {
+  ACCESS_TOKEN_COOKIE_NAME,
   createAuthErrorResponse,
   extractTokenFromHeader,
-  verifyToken,
+  verifyAccessToken,
 } from "./auth";
 
 type AuthenticatedUser = {
@@ -23,7 +24,9 @@ type AuthResult = {
 export function authenticateRequest(request: NextRequest): AuthResult {
   try {
     const authHeader = request.headers.get("authorization");
-    const token = extractTokenFromHeader(authHeader || "");
+    const headerToken = extractTokenFromHeader(authHeader || "") ?? undefined;
+    const cookieToken = request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)?.value;
+    const token = headerToken ?? cookieToken;
 
     if (!token) {
       return {
@@ -32,7 +35,7 @@ export function authenticateRequest(request: NextRequest): AuthResult {
       };
     }
 
-    const decoded = verifyToken(token);
+    const decoded = verifyAccessToken(token);
     if (!decoded) {
       return {
         isAuthenticated: false,
@@ -42,7 +45,10 @@ export function authenticateRequest(request: NextRequest): AuthResult {
 
     return {
       isAuthenticated: true,
-      user: decoded,
+      user: {
+        userId: decoded.sub,
+        name: decoded.name,
+      },
     };
   } catch (_error) {
     return {

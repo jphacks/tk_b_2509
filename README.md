@@ -45,6 +45,51 @@ Google マップのように“場所”を中心に表示するのではなく�
 - 他ユーザーとのマッチングによる「共作スポット」構築。
 - AR マップ表示や SNS 共有機能による拡張。
 
+---
+
+## 環境変数の設定
+
+アプリケーションは JWT を用いた認証を行っているため、**本番環境では `JWT_SECRET` を必ず設定**してください。設定されていない場合、ログイン API が初期化時にエラーを投げ、サインイン処理が失敗します。
+
+必要な環境変数は以下の通りです。
+
+| 変数名 | 説明 | 必須 | 備考 |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | Prisma が接続するデータベースの URL | ✅ | CockroachDB など |
+| `JWT_SECRET` | JWT の署名に使用する秘密鍵 | ✅ | 本番では十分に長いランダム文字列を使用すること |
+| `JWT_ACCESS_EXPIRES_IN` | アクセストークンの有効期限 | ⛔️ | 既定値は `15m` |
+| `JWT_REFRESH_EXPIRES_IN` | リフレッシュトークンの有効期限 | ⛔️ | 既定値は `30d` |
+
+### Vercel での設定例
+
+1. Vercel Dashboard の対象プロジェクトを開く  
+2. **Settings → Environment Variables** を選択  
+3. `JWT_SECRET` キーを追加し、十分に長いランダムな値（例: `openssl rand -base64 48` で生成）を入力  
+4. Environment を `Production`, `Preview`, `Development` それぞれ必要なものにチェック  
+5. **Save** 後に再デプロイ（`Redeploy`）して反映する
+
+ローカル開発では `.env.local` に以下を追記してください。
+
+```
+JWT_SECRET=your-local-secret
+# 任意。開発中にトークンの寿命を調整したい場合のみ設定
+# JWT_ACCESS_EXPIRES_IN=15m
+# JWT_REFRESH_EXPIRES_IN=30d
+```
+
+### セッション管理
+
+JWT 認証はアクセストークン（短期）とリフレッシュトークン（長期）の二層構成に変更されています。
+
+- `POST /api/auth/login` / `POST /api/auth/register`  
+  認証成功時にアクセストークン＋リフレッシュトークンをそれぞれ `HttpOnly` クッキーへ発行し、`user_sessions` テーブルにセッションを記録します。
+- `POST /api/auth/refresh`  
+  有効なリフレッシュトークンで新しいトークンを再発行し、既存セッションをローテーションします。再利用が検出された場合は全セッションを失効させます。
+- `POST /api/auth/logout`  
+  クッキーを削除し、対応するセッションを失効させます。
+
+本番環境へデプロイする前に `prisma migrate deploy`（または開発環境では `pnpm prisma migrate dev --name add_user_sessions`）を実行し、`user_sessions` テーブルを作成してください。
+
 ### 注力したこと（こだわり等）
 
 <!-- - レビューを「体験の記録」として活かし、感情や雰囲気まで伝わるデザインにした。 -->

@@ -88,6 +88,7 @@ export default function SignupPage() {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name, password, hometown }),
       });
 
@@ -97,6 +98,7 @@ export default function SignupPage() {
         return;
       }
 
+      await response.json();
       const data = await response.json();
 
       // トークンをlocalStorageに保存

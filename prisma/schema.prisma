@@ -25,12 +25,35 @@ model User {
   created_at    DateTime   @default(now())
   last_login_at DateTime   @default(now())
 
+  sessions UserSession[]
+
   // Userが作成したPost
   posts     Post[]
   // Userが行ったReaction
   reactions Reaction[]
   // Userの閲覧履歴
   views     PostView[]
+}
+
+model UserSession {
+  id               String   @id
+  userId           BigInt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issued_at        DateTime @default(now())
+  expires_at       DateTime
+  revoked          Boolean  @default(false)
+  revoked_at       DateTime?
+  revoked_reason   String?
+  last_used_at     DateTime?
+  refresh_token_hash String
+  fingerprint_hash String?
+  device_label     String?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([expires_at])
+  @@index([revoked])
 }
 
 // 場所の管理用
@@ -52,6 +75,13 @@ model Post {
   contents    String
   post_at     DateTime @default(now())
   views_count Int      @default(0)
+  img         String?
+
+  random_key_1 Float
+  random_key_2 Float
+  random_key_3 Float
+  random_key_4 Float
+  random_key_5 Float
 
   // 投稿場所 (Placeへのリレーション)
   placeId BigInt
@@ -65,6 +95,12 @@ model Post {
   reactions Reaction[]
   // この投稿の閲覧履歴
   views     PostView[]
+
+  @@index([random_key_1])
+  @@index([random_key_2])
+  @@index([random_key_3])
+  @@index([random_key_4])
+  @@index([random_key_5])
 }
 
 // リアクション管理用
