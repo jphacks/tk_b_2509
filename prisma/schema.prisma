@@ -36,7 +36,7 @@ model User {
 
 // 場所の管理用
 model Place {
-  id       Int     @id @default(sequence())
+  id       BigInt     @id @default(sequence())
   name     String
   lat      Decimal @db.Decimal(9, 6)
   lng      Decimal @db.Decimal(9, 6)
@@ -48,7 +48,7 @@ model Place {
 
 // 投稿の管理用
 model Post {
-  id          Int      @id @default(sequence())
+  id          BigInt      @id @default(sequence())
   mood_type   String
   contents    String
   post_at     DateTime @default(now())
@@ -70,7 +70,7 @@ model Post {
 
 // リアクション管理用
 model Reaction {
-  id            Int      @id @default(sequence())
+  id            BigInt      @id @default(sequence())
   reaction_type String
   created_at    DateTime @default(now())
 
@@ -89,11 +89,11 @@ model Reaction {
 // 閲覧履歴管理用 (1ユーザ1閲覧)
 model PostView {
   // 閲覧されたPost
-  postId Int
+  postId BigInt
   post   Post @relation(fields: [postId], references: [id])
 
   // 閲覧したUser
-  userId Int
+  userId BigInt
   user   User @relation(fields: [userId], references: [id])
 
   // 複合プライマリキー (これで1ユーザ1閲覧を保証)
