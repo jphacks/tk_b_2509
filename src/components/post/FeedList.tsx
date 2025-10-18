@@ -138,28 +138,30 @@ export function FeedList({ initialPosts }: FeedListProps) {
             (例: !isRefreshing && loadMoreInView && <Loader2 ... />) 
           */}
         </div>
-      {/* 8. 投稿リストの表示 */}
-      {posts.map((post) => (
-        <ReviewCard
-          key={post.id}
-          placeName={post.placeName}
-          badgeUrl="/vercel.svg"
-          reviewText={post.contents}
-          imageUrl={post.imageUrl}
-          reactionCount={post.reactionCount}
-          userAvatarUrl={post.userAvatarUrl ?? ""}
-          userAvatarFallback={getAvatarFallback(post.username)}
-          username={post.username}
-        />
-      ))}
+        {/* 8. 投稿リストの表示 */}
+        {posts.map((post) => (
+          <ReviewCard
+            key={post.id}
+            placeName={post.placeName}
+            badgeUrl="/vercel.svg"
+            reviewText={post.contents}
+            imageUrl={post.imageUrl}
+            reactionCount={post.reactionCount}
+            userAvatarUrl={
+              post.userAvatarUrl ??
+              "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
+            }
+            userAvatarFallback={getAvatarFallback(post.username)}
+            username={post.username}
+          />
+        ))}
 
-      {/* 8. 「無限スクロール」用の監視対象要素 */}
-      <div ref={loadMoreRef} className="h-10 w-full">
-        {/* ここにもスピナーを置くことが多い
+        {/* 8. 「無限スクロール」用の監視対象要素 */}
+        <div ref={loadMoreRef} className="h-10 w-full">
+          {/* ここにもスピナーを置くことが多い
           (例: !isRefreshing && loadMoreInView && <Loader2 ... />)
         */}
-      </div>
-
+        </div>
       </div>
 
       {/* 浮動投稿ボタン（FAB） - モバイル向け */}
