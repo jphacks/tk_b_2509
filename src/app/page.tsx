@@ -1,116 +1,161 @@
-"use client";
+import { ArrowRight, MessageSquare, Sparkles } from "lucide-react";
 import Image from "next/image";
-import { useEffect } from "react";
+import Link from "next/link";
+import { APP_NAME } from "@/consts/APP_NAME";
 
 export default function Home() {
-  useEffect(() => {
-    fetch("/api/db-health")
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Network response was not ok");
-        const data = await res.json();
-        console.log("DB Health:", data);
-      })
-      .catch((err) => {
-        console.error("DB Health Check Failed:", err);
-      });
-  }, []);
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* ヒーロー */}
+      <HeroSection />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {/* 特徴（ペルソナの課題に対応） */}
+      <FeaturesSection />
+
+      {/* CTA */}
+      <CtaSection />
+
+      {/* フッター */}
+      <Footer />
+    </div>
+  );
+}
+
+function HeroSection() {
+  const moods = [
+    { label: "リラックス", emoji: "😌" },
+    { label: "集中", emoji: "🎧" },
+    { label: "発想", emoji: "💡" },
+    { label: "雑談したい", emoji: "💬" },
+  ];
+  return (
+    <section className="pt-32 pb-10 px-4 max-w-6xl mx-auto text-center">
+      <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+        気分で選べる、はかどる作業場所。
+      </h1>
+      <p className="text-lg md:text-xl text-slate-600 mb-6 max-w-3xl mx-auto">
+        「フィード」から本当に作業しやすい場所が見つかる。
+        <br className="hidden md:block" />
+        カフェや図書館だけじゃない。公園や海辺など、思いがけない場所との出会いも。
+      </p>
+      <div className="flex flex-wrap gap-2 justify-center mb-8">
+        {moods.map((m) => (
+          <span
+            key={m.label}
+            className="px-3 py-1 rounded-full border border-slate-300 text-slate-700 bg-white"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <span className="mr-1">{m.emoji}</span>
+            {m.label}
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-4 justify-center">
+        <Link
+          href="/signup"
+          className="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 flex items-center"
+        >
+          はじめる
+          <ArrowRight className="ml-2 w-5 h-5" />
+        </Link>
+        <Link
+          href="/home"
+          className="px-6 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100"
+        >
+          スポットを見る
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function FeaturesSection() {
+  return (
+    <section className="py-16 px-4 bg-slate-50">
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-12">
+          {APP_NAME}の特徴
+        </h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          <FeatureCard
+            icon={<MessageSquare className="w-6 h-6 text-blue-600" />}
+            title="フィードから見つかる"
+            desc="雰囲気や混雑度など“作業のしやすさ”が伝わるユーザーの投稿から直感的に発見。"
+          />
+          <FeatureCard
+            icon={<Sparkles className="w-6 h-6 text-green-600" />}
+            title="気分タグで探せる"
+            desc="リラックス/集中/発想/雑談したい…その時の“気分”で最適な場所を。"
+          />
+          {/* <FeatureCard
+            icon={<Bell className="w-6 h-6 text-purple-600" />}
+            title="ゆるいつながり通知"
+            desc="「あなたのおすすめに行きました」通知で、適度なつながりとモチベ維持。"
+          /> */}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      </div>
+    </section>
+  );
+}
+
+function CtaSection() {
+  return (
+    <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-indigo-600">
+      <div className="max-w-4xl mx-auto text-center text-white">
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          今すぐはじめよう
+        </h2>
+        <p className="opacity-90 mb-8">
+          あなたの“はかどる場所”が、きっと見つかる。
+        </p>
+        <Link
+          href="/signup"
+          className="inline-flex items-center px-6 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-slate-100"
         >
+          無料で会員登録 <ArrowRight className="ml-2 w-5 h-5" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="py-10 text-center text-slate-500 text-sm">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="flex items-center justify-center gap-2 mb-2">
           <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+            src="/logo.webp"
+            alt={APP_NAME}
+            width={20}
+            height={20}
+            className="w-5 h-5"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <span className="font-semibold text-slate-700">{APP_NAME}</span>
+        </div>
+        <p>
+          © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+function FeatureCard({
+  icon,
+  title,
+  desc,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+      <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center mb-3">
+        {icon}
+      </div>
+      <h3 className="text-lg font-bold text-slate-900 mb-1">{title}</h3>
+      <p className="text-slate-600 text-sm leading-relaxed">{desc}</p>
     </div>
   );
 }
