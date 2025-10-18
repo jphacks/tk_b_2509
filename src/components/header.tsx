@@ -44,7 +44,21 @@ export default function Header() {
   return (
     <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
       <div className="max-w-full px-4 py-3">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center">
+        {/* スマホ: ロゴ中央レイアウト */}
+        <div className="md:hidden flex justify-center">
+          <Link href={ROUTES.home} className="flex items-center gap-2">
+            <Image
+              src="/logo.webp"
+              alt={APP_NAME}
+              width={32}
+              height={32}
+              className="object-contain"
+            />
+          </Link>
+        </div>
+
+        {/* PC: 3カラムレイアウト */}
+        <div className="hidden md:grid md:grid-cols-[auto_1fr_auto] items-center">
           {/* 左: ロゴ */}
           <div className="justify-self-start">
             <Link href={ROUTES.home} className="flex items-center gap-2">
@@ -55,7 +69,7 @@ export default function Header() {
                 height={32}
                 className="object-contain"
               />
-              <span className="text-base font-bold text-slate-900 hidden sm:inline">
+              <span className="text-base font-bold text-slate-900">
                 {APP_NAME}
               </span>
             </Link>
