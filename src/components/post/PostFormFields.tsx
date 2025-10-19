@@ -2,23 +2,9 @@
 
 import ImageUpload from "./ImageUpload";
 import MoodSelector from "./MoodSelector";
-import type { Mood, PlaceOption, PostFormData } from "./types";
+import type { MoodType, PostFormFieldsProps } from "@/lib/post-types";
 
 const MAX_COMMENT_LENGTH = 60;
-
-interface PostFormFieldsProps {
-  formData: PostFormData;
-  isSubmitting: boolean;
-  places: PlaceOption[];
-  placesLoading: boolean;
-  placesError: string | null;
-  onPlaceSelect: (placeId: string | null) => void;
-  onTextChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  onMoodSelect: (mood: Mood) => void;
-  onImageSelect: (file: File | null) => void;
-  onCancel: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-}
 
 export default function PostFormFields({
   formData,

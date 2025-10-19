@@ -1,13 +1,8 @@
 "use client";
 
-import type { Mood } from "./types";
+import type { MoodType, MoodSelectorProps } from "@/lib/post-types";
 
-interface MoodSelectorProps {
-  selectedMood: Mood | null;
-  onMoodSelect: (mood: Mood) => void;
-}
-
-const MOODS: { value: Mood; label: string; emoji: string }[] = [
+const MOODS: { value: MoodType; label: string; emoji: string }[] = [
   { value: "relax", label: "リラックス", emoji: "😌" },
   { value: "focus", label: "集中", emoji: "🎧" },
   { value: "idea", label: "発想", emoji: "💡" },
