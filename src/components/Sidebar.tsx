@@ -59,7 +59,7 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={`
-                flex flex-col md:flex-col lg:flex-col lg:gap-2 md:items-center lg:items-center md:justify-center lg:justify-center md:px-2 lg:px-4 md:py-3 lg:py-3 rounded-lg transition-colors w-full
+                flex flex-col items-center justify-center lg:gap-2 md:px-2 lg:px-4 py-3 rounded-lg transition-colors w-full
                 ${
                   isActive
                     ? "bg-blue-100 text-blue-600 font-semibold"
