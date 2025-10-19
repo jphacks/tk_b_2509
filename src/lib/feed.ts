@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 
 export interface PostData {
   id: number;
+  placeId: number;
   placeName: string;
   moodType: MoodType;
   contents: string;
@@ -83,6 +84,7 @@ export async function getFeedLogic(
   const postsFromDb = await prisma.$queryRaw<
     Array<{
       id: string;
+      place_id: string;
       mood_type: string;
       contents: string;
       img: string | null;
@@ -96,6 +98,7 @@ export async function getFeedLogic(
   >(Prisma.sql`
     SELECT 
       p.id,
+      p."placeId" as place_id,
       p.mood_type,
       p.contents,
       p.img,
@@ -146,6 +149,7 @@ export async function getFeedLogic(
 
       return {
         id: Number(post.id),
+        placeId: Number(post.place_id),
         placeName: post.place_name,
         moodType: post.mood_type as MoodType,
         contents: post.contents,

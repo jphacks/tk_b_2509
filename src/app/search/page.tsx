@@ -5,15 +5,62 @@ import type { MapPin } from "@/lib/map-types";
 import { fetchPosts } from "@/lib/feed";
 import { getRandomSortKey } from "@/lib/feed";
 import type { SortKey } from "@/lib/feed-types";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function SearchPage() {
   const [pins, setPins] = useState<MapPin[]>([]);
   const [center, setCenter] = useState({ lat: 35.6762, lng: 139.7674 });
   const [isLoading, setIsLoading] = useState(true);
+  const searchParams = useSearchParams();
+
+  const selectedLocation = useMemo(() => {
+    const latParam = searchParams.get("lat");
+    const lngParam = searchParams.get("lng");
+    if (!latParam || !lngParam) {
+      return null;
+    }
+
+    const lat = Number.parseFloat(latParam);
+    const lng = Number.parseFloat(lngParam);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+      return null;
+    }
+
+    const placeName = searchParams.get("place") ?? "選択したスポット";
+    const postId = searchParams.get("postId") ?? undefined;
+
+    return {
+      lat,
+      lng,
+      placeName,
+      postId,
+    };
+  }, [searchParams]);
 
   useEffect(() => {
+    const highlightPin = selectedLocation
+      ? ({
+          id:
+            selectedLocation.postId ??
+            `selected-${selectedLocation.lat}-${selectedLocation.lng}`,
+          position: {
+            lat: selectedLocation.lat,
+            lng: selectedLocation.lng,
+          },
+          content: (
+            <div className="text-sm">
+              <h3 className="font-semibold mb-1">
+                {selectedLocation.placeName}
+              </h3>
+              <p className="text-gray-600">フィードで選択したスポット</p>
+            </div>
+          ),
+        } satisfies MapPin)
+      : null;
+
     const loadPosts = async () => {
+      setIsLoading(true);
       try {
         // ランダムなソートキーで投稿を取得
         const sortKey = getRandomSortKey() as SortKey;
@@ -40,24 +87,38 @@ export default function SearchPage() {
           };
         });
 
-        setPins(mapPins);
+        let updatedPins = mapPins;
 
-        // 最初の投稿の位置をセンターに設定（投稿がある場合）
-        if (mapPins.length > 0 && response.posts[0]) {
+        if (highlightPin) {
+          const hasDuplicate = mapPins.some(
+            (pin) =>
+              pin.position.lat === highlightPin.position.lat &&
+              pin.position.lng === highlightPin.position.lng,
+          );
+
+          updatedPins = hasDuplicate ? mapPins : [highlightPin, ...mapPins];
+          setCenter(highlightPin.position);
+        } else if (mapPins.length > 0 && response.posts[0]) {
           setCenter({
             lat: response.posts[0].latitude,
             lng: response.posts[0].longitude,
           });
         }
+
+        setPins(updatedPins);
       } catch (error) {
         console.error("Failed to load posts:", error);
+        if (highlightPin) {
+          setPins([highlightPin]);
+          setCenter(highlightPin.position);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     loadPosts();
-  }, []);
+  }, [selectedLocation]);
 
   if (isLoading) {
     return (
