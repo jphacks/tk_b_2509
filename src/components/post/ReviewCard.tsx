@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"; // shadcn/ui のセットアップで導入さ
  * おすすめ作業場所を表示するためのカードコンポーネント
  */
 export function ReviewCard({
+  postId,
   placeName,
   badgeUrl,
   reviewText,
@@ -27,6 +28,8 @@ export function ReviewCard({
   userAvatarUrl,
   userAvatarFallback,
   username,
+  latitude,
+  longitude,
   className,
 }: ReviewCardProps) {
   // liked: いいね済みか (true/false)
@@ -46,6 +49,36 @@ export function ReviewCard({
       setLiked(true);
     }
     // 将来的にはここでAPIを叩いてサーバーに保存する処理も追加します
+  };
+
+  // 経路検索ボタンをクリックしたときの処理
+  const handleDirections = () => {
+    // 現在地の取得
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const currentLat = position.coords.latitude;
+          const currentLng = position.coords.longitude;
+
+          // Google Maps の directions URL を生成
+          // 形式: https://www.google.com/maps/dir/?api=1&origin=<currentLat>,<currentLng>&destination=<placeLat>,<placeLng>
+          const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${currentLat},${currentLng}&destination=${latitude},${longitude}`;
+
+          // 新しいタブで Google マップを開く
+          window.open(directionsUrl, "_blank");
+        },
+        (error) => {
+          // 位置情報の取得に失敗した場合は、Google マップで直接投稿地点を表示
+          console.error("位置情報の取得に失敗しました:", error);
+          const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+          window.open(mapsUrl, "_blank");
+        },
+      );
+    } else {
+      // Geolocation API が非対応の場合は、Google マップで直接投稿地点を表示
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+      window.open(mapsUrl, "_blank");
+    }
   };
   return (
     <Card className={cn("w-full max-w-lg", className)}>
@@ -76,7 +109,7 @@ export function ReviewCard({
         <div
           className={cn(
             "grid gap-4",
-            imageUrl ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1"
+            imageUrl ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1",
           )}
         >
           {/* レビュー文 */}
@@ -119,7 +152,7 @@ export function ReviewCard({
               className={cn(
                 "w-4 h-4",
                 // liked状態に応じてハートを塗りつぶす
-                liked && "fill-red-500"
+                liked && "fill-red-500",
               )}
               aria-hidden="true"
             />
@@ -131,10 +164,7 @@ export function ReviewCard({
             variant="ghost"
             size="sm"
             className="flex items-center gap-1.5 text-muted-foreground hover:text-blue-500"
-            onClick={() => {
-              // TODO: GoogleマップAPIで現在地からの経路検索を実装
-              console.log(`${placeName}への経路検索`);
-            }}
+            onClick={handleDirections}
             aria-label={`${placeName}への経路を検索`}
           >
             <MapPin className="w-4 h-4" aria-hidden="true" />

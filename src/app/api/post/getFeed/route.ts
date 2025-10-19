@@ -1,9 +1,9 @@
 // app/api/post/getFeed/route.ts
 
-import { getFeedLogic } from '@/lib/feed';
-import { ALLOWED_SORT_KEYS, SortKey } from '@/lib/feed-types';
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { getFeedLogic } from "@/lib/feed";
+import { ALLOWED_SORT_KEYS, SortKey } from "@/lib/feed-types";
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -16,17 +16,19 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     // 1. クエリパラメータの取得とバリデーション
-    const limitParam = searchParams.get('limit');
-    const sortByParam = searchParams.get('sort_by');
-    const cursorParam = searchParams.get('cursor');
+    const limitParam = searchParams.get("limit");
+    const sortByParam = searchParams.get("sort_by");
+    const cursorParam = searchParams.get("cursor");
 
     const limit = limitParam ? parseInt(limitParam, 10) : 20;
     const cursor = cursorParam ? parseFloat(cursorParam) : undefined;
-    
+
     // sort_by パラメータが指定されていないか、許可リストにない場合はエラー
     if (!sortByParam || !ALLOWED_SORT_KEYS.includes(sortByParam as SortKey)) {
       return NextResponse.json(
-        { error: 'A valid sort_by parameter is required (e.g., random_key_1).' },
+        {
+          error: "A valid sort_by parameter is required (e.g., random_key_1).",
+        },
         { status: 400 }
       );
     }
@@ -34,13 +36,13 @@ export async function GET(request: Request) {
 
     // 2. データベースから投稿を取得
     // limit + 1 件取得することで、次のページが存在するかを判定する
-    const posts = await prisma.post.findMany({
+    const posts = (await prisma.post.findMany({
       take: limit + 1, // 次のページの存在確認のため +1 件取得
       where: cursor
         ? { [sortBy]: { gt: cursor } } // カーソル指定時は、その値より大きいものを取得
-        : undefined,                  // 初回ロード時は条件なし
+        : undefined, // 初回ロード時は条件なし
       orderBy: {
-        [sortBy]: 'asc', // 指定されたキーで昇順ソート
+        [sortBy]: "asc", // 指定されたキーで昇順ソート
       },
       // 必要なフィールドとリレーションを select で明示的に指定
       select: {
@@ -62,7 +64,7 @@ export async function GET(request: Request) {
           select: { reactions: true }, // リアクション数
         },
       },
-    }) as unknown as Array<{
+    })) as unknown as Array<{
       id: bigint;
       mood_type: string;
       contents: string;
@@ -119,11 +121,10 @@ export async function GET(request: Request) {
         cursor: nextCursor, // 次のページがない場合は null
       },
     });
-
   } catch (error) {
-    console.error('Failed to fetch feed:', error);
+    console.error("Failed to fetch feed:", error);
     return NextResponse.json(
-      { error: 'An error occurred while fetching the feed.' },
+      { error: "An error occurred while fetching the feed." },
       { status: 500 }
     );
   }

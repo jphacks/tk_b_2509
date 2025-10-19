@@ -42,7 +42,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
 
   // 4. 現在のソートキーとカーソルの状態管理
-  const [sortBy, setSortBy] = useState<SortKey>('random_key_1');
+  const [sortBy, setSortBy] = useState<SortKey>("random_key_1");
   const [cursor, setCursor] = useState<number | undefined>(undefined);
 
   // 4. 「無限スクロール」用の設定
@@ -59,22 +59,26 @@ export function FeedList({ initialPosts }: FeedListProps) {
         event.preventDefault(); // デフォルトのスクロール動作をキャンセル
 
         setIsRefreshing(true);
-        
+
         setSortBy((prev) => {
           const newSortKey = getRandomSortKey([prev]) as SortKey;
           return newSortKey;
         });
 
-        fetchPosts(sortBy, 10, cursor).then((data) => {
-          setPosts(data.posts.map(post => ({
-            ...post,
-            mood_type: post.moodType
-          })));
-          setCursor(data.nextPageState.cursor || undefined);
-          setIsRefreshing(false);
-        }).catch(() => {
-          setIsRefreshing(false);
-        });
+        fetchPosts(sortBy, 10, cursor)
+          .then((data) => {
+            setPosts(
+              data.posts.map((post) => ({
+                ...post,
+                mood_type: post.moodType,
+              })),
+            );
+            setCursor(data.nextPageState.cursor || undefined);
+            setIsRefreshing(false);
+          })
+          .catch(() => {
+            setIsRefreshing(false);
+          });
       }
     };
 
@@ -94,22 +98,24 @@ export function FeedList({ initialPosts }: FeedListProps) {
       console.log("追加fetch"); // ★ 追加フェッチ処理の実行
 
       // 監視対象が見えて、かつ更新中でない（多重フェッチ防止）
-    if (loadMoreInView && !isRefreshing) {
-      console.log("追加fetch"); // ★ 追加フェッチ処理の実行
-      setIsRefreshing(true); // フェッチ中フラグを立てる
-      if (cursor === undefined) {
-        setIsRefreshing(false); // カーソルがない場合は何もしない
-        return;
+      if (loadMoreInView && !isRefreshing) {
+        console.log("追加fetch"); // ★ 追加フェッチ処理の実行
+        setIsRefreshing(true); // フェッチ中フラグを立てる
+        if (cursor === undefined) {
+          setIsRefreshing(false); // カーソルがない場合は何もしない
+          return;
+        }
+        fetchPosts(sortBy, 10, cursor)
+          .then((data) => {
+            setPosts((prevPosts) => [...prevPosts, ...data.posts]);
+            setCursor(data.nextPageState.cursor ?? undefined);
+            setIsRefreshing(false); // フェッチ完了でフラグを下ろす
+          })
+          .catch(() => {
+            setIsRefreshing(false); // エラー時もフラグを下ろす
+          });
       }
-      fetchPosts(sortBy, 10, cursor).then((data) => {
-        setPosts((prevPosts) => [...prevPosts, ...data.posts]);
-        setCursor(data.nextPageState.cursor ?? undefined);
-        setIsRefreshing(false); // フェッチ完了でフラグを下ろす
-      }).catch(() => {
-        setIsRefreshing(false); // エラー時もフラグを下ろす
-      });
     }
-  }
   }, [loadMoreInView, isRefreshing]);
 
   const fileToDataUrl = async (file: File): Promise<string> =>
@@ -129,11 +135,11 @@ export function FeedList({ initialPosts }: FeedListProps) {
             <Loader2 className="w-6 h-6 animate-spin" />
           </div>
         )}
-
         {/* 8. 投稿リストの表示 */}
         {posts.map((post) => (
           <ReviewCard
             key={post.id}
+            postId={post.id}
             placeName={post.placeName}
             badgeUrl={getBadgeImageUrl(post.moodType)}
             reviewText={post.contents}
@@ -145,40 +151,42 @@ export function FeedList({ initialPosts }: FeedListProps) {
             }
             userAvatarFallback={getAvatarFallback(post.username)}
             username={post.username}
+            latitude={post.latitude}
+            longitude={post.longitude}
           />
         ))}
-
         {/* 9. 「無限スクロール」用の監視対象要素 */}
         <div ref={loadMoreRef} className="h-10 w-full">
           {/* ここにもスピナーを置くことが多い
             (例: !isRefreshing && loadMoreInView && <Loader2 ... />) 
           */}
         </div>
-      {/* 8. 投稿リストの表示 */}
-      {posts.map((post) => (
-        <ReviewCard
-          key={post.id}
-          placeName={post.placeName}
-          badgeUrl={getBadgeImageUrl(post.moodType)}
-          reviewText={post.contents}
-          imageUrl={post.imageUrl}
-          reactionCount={post.reactionCount}
-          userAvatarUrl={
-            post.userAvatarUrl ||
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
-          }
-          userAvatarFallback={getAvatarFallback(post.username)}
-          username={post.username}
-        />
-      ))}
-
-      {/* 9. 「無限スクロール」用の監視対象要素 */}
-      <div ref={loadMoreRef} className="h-10 w-full">
-        {/* ここにもスピナーを置くことが多い
+        {/* 8. 投稿リストの表示 */}
+        {posts.map((post) => (
+          <ReviewCard
+            key={post.id}
+            postId={post.id}
+            placeName={post.placeName}
+            badgeUrl={getBadgeImageUrl(post.moodType)}
+            reviewText={post.contents}
+            imageUrl={post.imageUrl}
+            reactionCount={post.reactionCount}
+            userAvatarUrl={
+              post.userAvatarUrl ||
+              "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
+            }
+            userAvatarFallback={getAvatarFallback(post.username)}
+            username={post.username}
+            latitude={post.latitude}
+            longitude={post.longitude}
+          />
+        ))}{" "}
+        {/* 9. 「無限スクロール」用の監視対象要素 */}
+        <div ref={loadMoreRef} className="h-10 w-full">
+          {/* ここにもスピナーを置くことが多い
           (例: !isRefreshing && loadMoreInView && <Loader2 ... />)
         */}
-      </div>
-
+        </div>
       </div>
 
       {/* 浮動投稿ボタン（FAB） - モバイル向け */}
@@ -232,6 +240,8 @@ export function FeedList({ initialPosts }: FeedListProps) {
             reactionCount: createdPost.reactionCount,
             userAvatarUrl: createdPost.author.avatar,
             username: createdPost.author.name,
+            latitude: data.location?.latitude ?? 0,
+            longitude: data.location?.longitude ?? 0,
           };
 
           setPosts((prev) => [newPost, ...prev]);

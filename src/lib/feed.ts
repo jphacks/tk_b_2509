@@ -11,6 +11,8 @@ export interface PostData {
   reactionCount: number;
   userAvatarUrl: string | null;
   username: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface ApiResponse {
@@ -21,15 +23,19 @@ export interface ApiResponse {
   };
 }
 
-export async function fetchPosts(sortKey: string | undefined, limit: number = 10, cursor: number | undefined = undefined): Promise<ApiResponse> {
-    const params = new URLSearchParams();
-    params.append("limit", limit.toString());
-    if (sortKey) {
-      params.append("sort_by", sortKey);
-    }
-    if (cursor) {
-      params.append("cursor", cursor.toString());
-    }
+export async function fetchPosts(
+  sortKey: string | undefined,
+  limit: number = 10,
+  cursor: number | undefined = undefined
+): Promise<ApiResponse> {
+  const params = new URLSearchParams();
+  params.append("limit", limit.toString());
+  if (sortKey) {
+    params.append("sort_by", sortKey);
+  }
+  if (cursor) {
+    params.append("cursor", cursor.toString());
+  }
 
   const response = await fetch(`/api/post/getFeed?${params.toString()}`);
   if (!response.ok) {
@@ -39,67 +45,114 @@ export async function fetchPosts(sortKey: string | undefined, limit: number = 10
 }
 
 export function getRandomSortKey(excludes: string[] = []): string {
-    const filteredKeys = ALLOWED_SORT_KEYS.filter(key => !excludes.includes(key));
-    const randomIndex = Math.floor(Math.random() * filteredKeys.length);
-    return filteredKeys[randomIndex];
+  const filteredKeys = ALLOWED_SORT_KEYS.filter(
+    (key) => !excludes.includes(key)
+  );
+  const randomIndex = Math.floor(Math.random() * filteredKeys.length);
+  return filteredKeys[randomIndex];
 }
 
 export async function getFeedLogic(
   sortBy: SortKey,
   limit: number,
-  cursor?: number,
+  cursor?: number
 ): Promise<ApiResponse> {
-  
-  // 1. データベースから取得 (route.tsからロジックを移動)
-  const postsFromDb = await prisma.post.findMany({
-    take: limit + 1,
-    where: cursor ? { [sortBy]: { gt: cursor } } : undefined,
-    orderBy: { [sortBy]: "asc" },
-    select: {
-      id: true,
-      mood_type: true,
-      contents: true,
-      img: true,
-      [sortBy]: true,
-      place: { select: { name: true } },
-      author: { select: { name: true, avatar: true } },
-      _count: { select: { reactions: true } },
-    },
-  }) as unknown as Array<{
-    id: bigint;
-    mood_type: string;
-    contents: string;
-    img: string | null;
-    random_key_1: number;
-    random_key_2: number;
-    random_key_3: number;
-    random_key_4: number;
-    random_key_5: number;
-    place: { name: string };
-    author: { name: string; avatar: string | null };
-    _count: { reactions: number };
-  }>;
+  // 1. データベースから取得 - raw SQL で geom も取得
+  let query: string;
 
-  // 2. 次ページのカーソルを決定 (route.tsからロジックを移動)
-  let nextCursor: number | null = null;
-  if (postsFromDb.length > limit) {
-    const lastPost = postsFromDb.pop();
-    if (lastPost) {
-      nextCursor = lastPost[sortBy] as number;
-    }
+  if (cursor !== undefined) {
+    query = `
+      SELECT 
+        p.id,
+        p.mood_type,
+        p.contents,
+        p.img,
+        p."${sortBy}" as sort_key,
+        pl.name as place_name,
+        ST_AsText(pl.geom) as geom_text,
+        u.name as author_name,
+        u.avatar as author_avatar,
+        COUNT(r.id) as reaction_count
+      FROM "Post" p
+      JOIN "Place" pl ON p."placeId" = pl.id
+      JOIN "User" u ON p."authorId" = u.id
+      LEFT JOIN "Reaction" r ON p.id = r."postId"
+      WHERE p."${sortBy}" > ${cursor}
+      GROUP BY p.id, pl.id, u.id
+      ORDER BY p."${sortBy}" ASC
+      LIMIT ${limit + 1}
+    `;
+  } else {
+    query = `
+      SELECT 
+        p.id,
+        p.mood_type,
+        p.contents,
+        p.img,
+        p."${sortBy}" as sort_key,
+        pl.name as place_name,
+        ST_AsText(pl.geom) as geom_text,
+        u.name as author_name,
+        u.avatar as author_avatar,
+        COUNT(r.id) as reaction_count
+      FROM "Post" p
+      JOIN "Place" pl ON p."placeId" = pl.id
+      JOIN "User" u ON p."authorId" = u.id
+      LEFT JOIN "Reaction" r ON p.id = r."postId"
+      GROUP BY p.id, pl.id, u.id
+      ORDER BY p."${sortBy}" ASC
+      LIMIT ${limit + 1}
+    `;
   }
 
-  // 3. フロントエンド用に整形 (route.tsからロジックを移動)
-  const formattedPosts: PostData[] = postsFromDb.map((post) => ({
-    id: Number(post.id), // BigIntをnumberに
-    placeName: post.place.name,
-    moodType: post.mood_type as MoodType, // mood_type -> moodType
-    contents: post.contents,
-    imageUrl: post.img,
-    reactionCount: post._count.reactions,
-    userAvatarUrl: post.author.avatar,
-    username: post.author.name,
-  }));
+  const postsFromDb = await prisma.$queryRawUnsafe<
+    Array<{
+      id: string;
+      mood_type: string;
+      contents: string;
+      img: string | null;
+      sort_key: number;
+      place_name: string;
+      geom_text: string;
+      author_name: string;
+      author_avatar: string | null;
+      reaction_count: string;
+    }>
+  >(query);
+
+  // 2. 次ページのカーソルを決定
+  let nextCursor: number | null = null;
+  let postsForResponse = postsFromDb;
+
+  if (postsFromDb.length > limit) {
+    const lastPost = postsFromDb[postsFromDb.length - 1];
+    postsForResponse = postsFromDb.slice(0, limit);
+    nextCursor = Number(lastPost.sort_key);
+  }
+
+  // 3. フロントエンド用に整形
+  const formattedPosts: PostData[] = postsForResponse.map((post) => {
+    // POINT(longitude latitude) 形式から緯度経度を抽出
+    const pointPattern =
+      /POINT\s*\(\s*([-+]?\d*\.?\d+)\s+([-+]?\d*\.?\d+)\s*\)/;
+    const match = post.geom_text.match(pointPattern);
+    const [longitude, latitude] = match
+      ? [Number(match[1]), Number(match[2])]
+      : [0, 0];
+
+    return {
+      id: Number(post.id),
+      placeName: post.place_name,
+      moodType: post.mood_type as MoodType,
+      contents: post.contents,
+      imageUrl: post.img,
+      reactionCount: Number(post.reaction_count),
+      userAvatarUrl: post.author_avatar,
+      username: post.author_name,
+      latitude,
+      longitude,
+    };
+  });
 
   return {
     posts: formattedPosts,
