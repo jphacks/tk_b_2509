@@ -58,7 +58,7 @@ export function ReviewCard({
           <CardTitle>{placeName}</CardTitle>
           {/* バッジ（Next.jsのImageコンポーネントを使用） */}
           <Image
-            src={badgeUrl} // TODO: 変更
+            src={badgeUrl}
             alt="バッジ"
             width={40} // バッジのサイズに合わせて調整してください
             height={40} // バッジのサイズに合わせて調整してください
