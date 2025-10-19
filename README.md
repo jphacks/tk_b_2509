@@ -1,4 +1,4 @@
-# SerenSpot - 新しい作業スポットとの出会いを。
+# SerenSpot - 新たな作業スポットとの出会いを。
 
 [![イメージ図](./docs/image.png)](https://www.youtube.com/watch?v=lA9EluZugD8)
 
