@@ -4,7 +4,7 @@ import { PostDialog } from "@/components/post";
 import { ReviewCard } from "@/components/post/ReviewCard";
 import { createPost } from "@/lib/api/posts";
 import { fetchPosts, getRandomSortKey } from "@/lib/feed";
-import { SortKey } from "@/lib/feed-types";
+import type { SortKey } from "@/lib/feed-types";
 import type { FeedListProps, PostData, PostFormData } from "@/lib/post-types";
 import { Loader2, Plus } from "lucide-react"; // shadcn/ui 標準のスピナーアイコン
 import { useEffect, useState } from "react";
@@ -35,13 +35,16 @@ export function FeedList({ initialPosts }: FeedListProps) {
   // 1. 投稿リストの状態管理
   const [posts, setPosts] = useState(initialPosts);
 
-  // 2. 「引っ張って更新」用の状態管理
+  // 2. moodTypeフィルターの状態管理
+  const [selectedMoodType, setSelectedMoodType] = useState<string>("");
+
+  // 3. 「引っ張って更新」用の状態管理
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 3. 投稿ダイアログの状態管理
+  // 4. 投稿ダイアログの状態管理
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
 
-  // 4. 現在のソートキーとカーソルの状態管理
+  // 5. 現在のソートキーとカーソルの状態管理
   const [sortBy, setSortBy] = useState<SortKey>('random_key_1');
   const [cursor, setCursor] = useState<number | undefined>(undefined);
 
@@ -51,7 +54,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
     triggerOnce: false, // 見えるたびにトリガー（通常はtrueだが、フェッチ中にfalseになるように制御するためfalseに）
   });
 
-  // 5. 「引っ張って更新」のロジック (PCのホイール操作)
+  // 6. 「引っ張って更新」のロジック (PCのホイール操作)
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
       // ページ一番上 + 上スクロール + 更新中でない
@@ -65,7 +68,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
           return newSortKey;
         });
 
-        fetchPosts(sortBy, 10, cursor).then((data) => {
+        fetchPosts(sortBy, 10, cursor, selectedMoodType || undefined).then((data) => {
           setPosts(data.posts.map(post => ({
             ...post,
             mood_type: post.moodType
@@ -85,9 +88,9 @@ export function FeedList({ initialPosts }: FeedListProps) {
     return () => {
       window.removeEventListener("wheel", handleWheel);
     };
-  }, [isRefreshing]); // isRefreshing が変わるたびにリスナーを再評価
+  }, [isRefreshing, sortBy, cursor, selectedMoodType]);
 
-  // 6. 「無限スクロール」のロジック
+  // 7. 「無限スクロール」のロジック
   useEffect(() => {
     // 監視対象が見えて、かつ更新中でない（多重フェッチ防止）
     if (loadMoreInView && !isRefreshing) {
@@ -101,7 +104,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
         setIsRefreshing(false); // カーソルがない場合は何もしない
         return;
       }
-      fetchPosts(sortBy, 10, cursor).then((data) => {
+      fetchPosts(sortBy, 10, cursor, selectedMoodType || undefined).then((data) => {
         setPosts((prevPosts) => [...prevPosts, ...data.posts]);
         setCursor(data.nextPageState.cursor ?? undefined);
         setIsRefreshing(false); // フェッチ完了でフラグを下ろす
@@ -110,7 +113,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
       });
     }
   }
-  }, [loadMoreInView, isRefreshing]);
+  }, [loadMoreInView, isRefreshing, sortBy, cursor, selectedMoodType]);
 
   const fileToDataUrl = async (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -120,9 +123,46 @@ export function FeedList({ initialPosts }: FeedListProps) {
       reader.readAsDataURL(file);
     });
 
+  // 8. moodTypeフィルター変更時に投稿を再取得
+  const handleMoodTypeChange = (moodType: string) => {
+    setSelectedMoodType(moodType);
+    setIsRefreshing(true);
+    setCursor(undefined); // リセット
+    
+    fetchPosts(sortBy, 10, undefined, moodType || undefined).then((data) => {
+      setPosts(data.posts.map(post => ({
+        ...post,
+        mood_type: post.moodType
+      })));
+      setCursor(data.nextPageState.cursor || undefined);
+      setIsRefreshing(false);
+    }).catch(() => {
+      setIsRefreshing(false);
+    });
+  };
+
   return (
     <>
       <div className="flex flex-col items-center space-y-6 pb-24 md:pb-0">
+        {/* セレクトボックス: moodTypeでフィルター */}
+        <div className="w-full max-w-lg px-4 py-4 bg-background sticky top-16 md:top-20 z-40 shadow-sm">
+          <label htmlFor="mood-filter" className="block text-sm font-medium mb-2 text-foreground">
+            気分で絞り込み
+          </label>
+          <select
+            id="mood-filter"
+            value={selectedMoodType}
+            onChange={(e) => handleMoodTypeChange(e.target.value)}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="">すべて表示</option>
+            <option value="relax">リラックス</option>
+            <option value="focus">集中</option>
+            <option value="idea">アイデア</option>
+            <option value="chat">チャット</option>
+          </select>
+        </div>
+
         {/* 7. 「引っ張って更新」用のスピナー */}
         {isRefreshing && (
           <div className="py-4">
