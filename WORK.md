@@ -4,6 +4,7 @@
 - 投稿フォーム (`src/components/post/PostDialog.tsx`) で場所検索の呼び出しを廃止し、送信時に `getCurrentLocation` を直接利用して端末の現在地を取得するよう変更しました。取得失敗時はエラーを通知し、デフォルトロケーションを使わないようにしています。フォームリセット時には位置情報もクリアします。
 - 投稿フォームのフィールド定義 (`src/components/post/PostFormFields.tsx` と `src/lib/post-types.ts`) を整理し、検索用のプロパティを削除して現在地ベースの入力に特化させました。
 - ログインページ (`src/app/login/page.tsx`) でローカルのJWTトークンを確認し、有効なセッションであれば自動的にフィードへリダイレクトするフローを追加しました。検証用に `/api/auth/session` エンドポイントを新設し、既存の JWT ミドルウェアでトークンをチェックしています。
+- フィードの「経路」ボタンを押すとブラウザで Google マップの経路検索が開き、現在地から投稿スポットへのルートを表示するようにしました（`src/components/post/ReviewCard.tsx`）。位置情報取得に失敗した場合はスポット座標のマップ検索を開きます。
 - 投稿一覧 (`src/components/post/FeedList.tsx`) から `createPost` 呼び出し時に位置情報を渡すようにし、API とのデータ整合性を保ちました。
 - クライアント側の API ヘルパー (`src/lib/api/posts.ts`) と型定義 (`src/lib/post-types.ts`) に位置情報フィールドを追加し、フロントとバックエンドのデータ契約を拡張しました。
 

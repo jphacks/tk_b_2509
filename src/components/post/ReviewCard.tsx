@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Heart, MapPin } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 // shadcn/uiコンポーネント
 import {
   Card,
@@ -52,34 +52,27 @@ export function ReviewCard({
   };
 
   // 経路検索ボタンをクリックしたときの処理
-  const handleDirections = () => {
-    // 現在地の取得
+  const handleDirections = useCallback(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const currentLat = position.coords.latitude;
           const currentLng = position.coords.longitude;
-
-          // Google Maps の directions URL を生成
-          // 形式: https://www.google.com/maps/dir/?api=1&origin=<currentLat>,<currentLng>&destination=<placeLat>,<placeLng>
           const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${currentLat},${currentLng}&destination=${latitude},${longitude}`;
-
-          // 新しいタブで Google マップを開く
-          window.open(directionsUrl, "_blank");
+          window.open(directionsUrl, "_blank", "noreferrer");
         },
         (error) => {
-          // 位置情報の取得に失敗した場合は、Google マップで直接投稿地点を表示
           console.error("位置情報の取得に失敗しました:", error);
           const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-          window.open(mapsUrl, "_blank");
+          window.open(mapsUrl, "_blank", "noreferrer");
         },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
       );
     } else {
-      // Geolocation API が非対応の場合は、Google マップで直接投稿地点を表示
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-      window.open(mapsUrl, "_blank");
+      window.open(mapsUrl, "_blank", "noreferrer");
     }
-  };
+  }, [latitude, longitude]);
   return (
     <Card className={cn("w-full max-w-lg", className)}>
       {/* ---------------------------------- */}
