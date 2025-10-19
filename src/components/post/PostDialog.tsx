@@ -3,7 +3,12 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostFormFields from "./PostFormFields";
-import type { MoodType, PostFormData, PostDialogProps, PlaceOption } from "@/lib/post-types";
+import type {
+  MoodType,
+  PostFormData,
+  PostDialogProps,
+  PlaceOption,
+} from "@/lib/post-types";
 
 const DEFAULT_PLACE_PARAMS = {
   lat: 35.6812,
@@ -28,7 +33,7 @@ export default function PostDialog({
   const [placesLoading, setPlacesLoading] = useState(false);
   const [placesError, setPlacesError] = useState<string | null>(null);
 
-  // ダイアログが開いているときはbodyのスクロールを禁止
+  // ダイアログが開いているときは body スクロールを禁止
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -40,7 +45,11 @@ export default function PostDialog({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  // 場所情報の取得処理
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
 
     let cancelled = false;
     const fetchPlaces = async () => {
@@ -83,7 +92,7 @@ export default function PostDialog({
       } catch (error) {
         if (!cancelled) {
           setPlacesError(
-            error instanceof Error ? error.message : "場所の取得に失敗しました",
+            error instanceof Error ? error.message : "場所の取得に失敗しました"
           );
         }
       } finally {
@@ -175,9 +184,9 @@ export default function PostDialog({
       {/* PC: 中央オーバーレイダイアログ */}
       <dialog
         className="
-          hidden lg:flex fixed lg:inset-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 
-          lg:w-full lg:max-w-md lg:rounded-xl lg:shadow-2xl lg:flex-col
-          z-50 bg-white outline-none lg:max-h-[90vh] lg:overflow-y-auto
+          hidden md:flex fixed md:inset-1/2 md:-translate-x-1/2 md:-translate-y-1/2 
+          md:w-full md:max-w-md md:rounded-xl md:shadow-2xl md:flex-col
+          z-50 bg-white outline-none
         "
         open={isOpen}
       >
@@ -207,13 +216,13 @@ export default function PostDialog({
         />
       </dialog>
 
-      {/* モバイル・タブレット: 下部シート */}
+      {/* モバイル: 下部シート */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="postSheetTitle"
         className="
-          fixed bottom-0 left-0 right-0 lg:hidden md:left-20
+          fixed bottom-0 left-0 right-0 md:hidden
           bg-white rounded-t-2xl shadow-2xl z-50
           animate-in slide-in-from-bottom-4
           max-h-[90vh] overflow-y-auto
