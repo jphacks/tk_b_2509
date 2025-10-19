@@ -4,6 +4,8 @@ export interface LocationData {
   longitude: number;
   accuracy?: number;
   timestamp?: number;
+  name?: string;
+  isDefault?: boolean;
 }
 
 export interface GeolocationError {
@@ -23,6 +25,17 @@ export const GEOLOCATION_ERRORS = {
   POSITION_UNAVAILABLE: 2,
   TIMEOUT: 3,
 } as const;
+
+// デフォルトロケーション（皇居）
+export const DEFAULT_LOCATION = {
+  latitude: 35.6852,
+  longitude: 139.7528,
+  name: "皇居",
+  isDefault: true,
+} as const;
+
+// 権限状態の型定義
+export type PermissionState = 'granted' | 'denied' | 'prompt' | 'unknown';
 
 /**
  * ブラウザのGeolocation APIがサポートされているかチェック
@@ -125,4 +138,136 @@ export function formatDistance(meters: number): string {
     return `${Math.round(meters)}m`;
   }
   return `${(meters / 1000).toFixed(1)}km`;
+}
+
+/**
+ * 位置情報アクセス権限の状態を確認
+ */
+export async function checkLocationPermission(): Promise<PermissionState> {
+  if (!isGeolocationSupported()) {
+    return 'unknown';
+  }
+
+  try {
+    // Permissions APIが利用可能な場合
+    if ('permissions' in navigator && navigator.permissions) {
+      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      return permission.state as PermissionState;
+    }
+    return 'unknown';
+  } catch (error) {
+    console.warn('Permission check failed:', error);
+    return 'unknown';
+  }
+}
+
+/**
+ * 位置情報アクセス権限をリクエスト
+ */
+export async function requestLocationPermission(): Promise<PermissionState> {
+  if (!isGeolocationSupported()) {
+    return 'unknown';
+  }
+
+  try {
+    // まず現在の権限状態を確認
+    const currentPermission = await checkLocationPermission();
+
+    // 既に許可されている場合はそのまま返す
+    if (currentPermission === 'granted') {
+      return 'granted';
+    }
+
+    // 権限をリクエスト（実際の位置情報取得を試行）
+    await getCurrentLocation({ timeout: 1000 });
+    return 'granted';
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (errorMessage.includes('許可が拒否')) {
+      return 'denied';
+    }
+
+    if (errorMessage.includes('タイムアウト')) {
+      return 'prompt'; // タイムアウトはプロンプト状態として扱う
+    }
+
+    return 'unknown';
+  }
+}
+
+/**
+ * 現在地取得を試み、失敗したらデフォルト値を返す関数
+ */
+export async function getLocationWithFallback(
+  options: GeolocationOptions = {},
+): Promise<LocationData> {
+  try {
+    // まず実際の現在地取得を試行
+    const location = await getCurrentLocation(options);
+    return {
+      ...location,
+      name: "現在地",
+      isDefault: false,
+    };
+  } catch (error) {
+    console.warn('現在地取得に失敗、デフォルト値を使用します:', error);
+
+    // 失敗した場合は皇居をデフォルト値として返す
+    return {
+      ...DEFAULT_LOCATION,
+      timestamp: Date.now(),
+    };
+  }
+}
+
+/**
+ * ログイン時の位置情報設定処理
+ * 権限リクエストとフォールバック処理を統合
+ */
+export async function setupLocationOnLogin(): Promise<{
+  location: LocationData;
+  permission: PermissionState;
+  message: string;
+}> {
+  try {
+    // まず権限をリクエスト
+    const permission = await requestLocationPermission();
+
+    if (permission === 'granted') {
+      // 権限が許可された場合、現在地を取得
+      const location = await getCurrentLocation();
+      return {
+        location: {
+          ...location,
+          name: "現在地",
+          isDefault: false,
+        },
+        permission,
+        message: "位置情報アクセスが許可されました。現在地が設定されました。",
+      };
+    } else {
+      // 権限が拒否された場合、デフォルト値を使用
+      return {
+        location: {
+          ...DEFAULT_LOCATION,
+          timestamp: Date.now(),
+        },
+        permission,
+        message: "位置情報アクセスが拒否されました。皇居をデフォルト場所として設定します。",
+      };
+    }
+  } catch (error) {
+    console.error('位置情報設定エラー:', error);
+
+    // エラー時はデフォルト値を使用
+    return {
+      location: {
+        ...DEFAULT_LOCATION,
+        timestamp: Date.now(),
+      },
+      permission: 'unknown',
+      message: "位置情報の設定に失敗しました。皇居をデフォルト場所として設定します。",
+    };
+  }
 }

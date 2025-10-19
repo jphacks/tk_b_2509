@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { setupLocationOnLogin, type LocationData } from "@/lib/geolocation";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -9,6 +10,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [locationMessage, setLocationMessage] = useState("");
+  const [locationSuccess, setLocationSuccess] = useState<boolean | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +37,29 @@ export default function LoginPage() {
       // トークンをlocalStorageに保存
       if (data.token) {
         localStorage.setItem("token", data.token);
+      }
+
+      // ログイン成功後に位置情報設定を試行
+      try {
+        const locationResult = await setupLocationOnLogin();
+
+        // 位置情報をlocalStorageに保存（他のページで使用するため）
+        localStorage.setItem("userLocation", JSON.stringify(locationResult.location));
+        localStorage.setItem("locationPermission", locationResult.permission);
+
+        // ユーザーに結果を通知
+        setLocationMessage(locationResult.message);
+        setLocationSuccess(locationResult.permission === 'granted');
+
+        // 3秒後にメッセージを自動的に消去
+        setTimeout(() => {
+          setLocationMessage("");
+          setLocationSuccess(null);
+        }, 3000);
+
+      } catch (locationError) {
+        console.error("位置情報設定エラー:", locationError);
+        // 位置情報設定に失敗してもログインは継続
       }
 
       router.push("/feed");
@@ -99,6 +125,27 @@ export default function LoginPage() {
             {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
+
+            {/* 位置情報設定メッセージ */}
+            {locationMessage && (
+              <div className={`p-4 border rounded-lg ${
+                locationSuccess === true
+                  ? 'bg-green-50 border-green-200'
+                  : locationSuccess === false
+                  ? 'bg-yellow-50 border-yellow-200'
+                  : 'bg-blue-50 border-blue-200'
+              }`}>
+                <p className={`text-sm ${
+                  locationSuccess === true
+                    ? 'text-green-700'
+                    : locationSuccess === false
+                    ? 'text-yellow-700'
+                    : 'text-blue-700'
+                }`}>
+                  {locationMessage}
+                </p>
               </div>
             )}
 
