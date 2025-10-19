@@ -6,7 +6,6 @@ import {
   type MoodType,
   type ParsedCreatePostBody,
   type ParsedCreatePostBodyWithLocation,
-  REQUIRED_CREATE_POST_FIELDS,
 } from "@/lib/post-types";
 import { SpatialQueries } from "@/lib/spatial";
 import { prisma } from "@/lib/prisma";
@@ -35,6 +34,53 @@ function parseBigIntId(value: unknown): bigint | null {
     }
   }
   return null;
+}
+
+type ParsedLocation = {
+  latitude: number;
+  longitude: number;
+  name?: string;
+};
+
+function parseLocationInput(input: unknown): ParsedLocation | null {
+  if (typeof input !== "object" || input === null) {
+    return null;
+  }
+
+  const maybeLocation = input as {
+    latitude?: unknown;
+    longitude?: unknown;
+    name?: unknown;
+  };
+
+  if (
+    typeof maybeLocation.latitude !== "number" ||
+    Number.isNaN(maybeLocation.latitude) ||
+    maybeLocation.latitude < -90 ||
+    maybeLocation.latitude > 90
+  ) {
+    return null;
+  }
+
+  if (
+    typeof maybeLocation.longitude !== "number" ||
+    Number.isNaN(maybeLocation.longitude) ||
+    maybeLocation.longitude < -180 ||
+    maybeLocation.longitude > 180
+  ) {
+    return null;
+  }
+
+  const name =
+    typeof maybeLocation.name === "string"
+      ? maybeLocation.name.trim()
+      : undefined;
+
+  return {
+    latitude: maybeLocation.latitude,
+    longitude: maybeLocation.longitude,
+    name: name && name.length > 0 ? name : undefined,
+  };
 }
 
 function validateRequestBody(
@@ -80,6 +126,29 @@ function validateRequestBody(
 
   // placeIdが提供された場合の従来の検証
   if (body.placeId !== undefined) {
+    if (typeof body.placeId === "string") {
+      const placeName = body.placeId.trim();
+      if (placeName.length === 0) {
+        return null;
+      }
+
+      const parsedLocation = parseLocationInput(body.location);
+      if (!parsedLocation) {
+        return null;
+      }
+
+      return {
+        moodType,
+        contents,
+        placeName,
+        location: {
+          latitude: parsedLocation.latitude,
+          longitude: parsedLocation.longitude,
+        },
+        imageUrl,
+      };
+    }
+
     const placeId = parseBigIntId(body.placeId);
     if (placeId === null) {
       return null;
@@ -94,19 +163,8 @@ function validateRequestBody(
 
   // locationが提供された場合の検証
   if (body.location !== undefined) {
-    if (
-      typeof body.location !== "object" ||
-      body.location === null ||
-      typeof body.location.latitude !== "number" ||
-      typeof body.location.longitude !== "number"
-    ) {
-      return null;
-    }
-
-    const { latitude, longitude, name } = body.location;
-
-    // 緯度経度の有効範囲チェック
-    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    const parsedLocation = parseLocationInput(body.location);
+    if (!parsedLocation) {
       return null;
     }
 
@@ -114,9 +172,9 @@ function validateRequestBody(
       moodType,
       contents,
       location: {
-        latitude,
-        longitude,
-        name: typeof name === "string" ? name.trim() : undefined,
+        latitude: parsedLocation.latitude,
+        longitude: parsedLocation.longitude,
+        name: parsedLocation.name,
       },
       imageUrl,
     };
@@ -254,6 +312,32 @@ export async function POST(request: NextRequest) {
       }
 
       placeName = place.name;
+    } else if ("placeName" in validatedBody) {
+      const placeNameInput = validatedBody.placeName;
+      const { latitude, longitude } = validatedBody.location;
+
+      try {
+        const createdPlace = await SpatialQueries.createPlace(
+          placeNameInput,
+          longitude,
+          latitude,
+        );
+        const createdPlaceId = parseBigIntId(createdPlace.id);
+        if (createdPlaceId === null) {
+          throw new Error("Invalid place id created");
+        }
+        placeId = createdPlaceId;
+        placeName = createdPlace.name;
+      } catch (error) {
+        console.error("Place creation error:", error);
+        return NextResponse.json(
+          {
+            error: "場所の登録に失敗しました",
+            code: "PLACE_CREATE_FAILED",
+          },
+          { status: 500 },
+        );
+      }
     }
     // locationが提供された場合（自動的にPlaceを作成）
     else if ("location" in validatedBody) {

@@ -15,12 +15,27 @@ export const ALLOWED_MOOD_TYPES = ["relax", "focus", "idea", "chat"] as const;
 
 export type MoodType = (typeof ALLOWED_MOOD_TYPES)[number];
 
-export type ParsedCreatePostBody = {
+export type ParsedCreatePostBodyWithNumericId = {
   moodType: MoodType;
   contents: string;
   placeId: bigint;
   imageUrl: string | null;
 };
+
+export type ParsedCreatePostBodyWithName = {
+  moodType: MoodType;
+  contents: string;
+  placeName: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  imageUrl: string | null;
+};
+
+export type ParsedCreatePostBody =
+  | ParsedCreatePostBodyWithNumericId
+  | ParsedCreatePostBodyWithName;
 
 export type ParsedCreatePostBodyWithLocation = {
   moodType: MoodType;
@@ -52,12 +67,20 @@ export interface PostData {
 }
 
 // 投稿フォーム関連の型定義
+export interface PostLocation {
+  latitude: number;
+  longitude: number;
+  name?: string;
+  isDefault?: boolean;
+}
+
 export interface PostFormData {
   placeId: string | null;
   spotName: string;
   mood: MoodType | null;
   text: string;
   image: File | null;
+  location: PostLocation | null;
 }
 
 export interface PlaceOption {

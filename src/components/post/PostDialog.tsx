@@ -9,6 +9,7 @@ import type {
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostFormFields from "./PostFormFields";
+import { getLocationWithFallback } from "@/lib/geolocation";
 // import type { MoodType, PostFormData, PostDialogProps, PlaceOption } from "@/lib/post-types"; // NOTE: 入れたほうがいいかも？
 
 const DEFAULT_PLACE_PARAMS = {
@@ -28,6 +29,7 @@ export default function PostDialog({
     mood: null,
     text: "",
     image: null,
+    location: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [places, setPlaces] = useState<PlaceOption[]>([]);
@@ -113,8 +115,12 @@ export default function PostDialog({
   if (!isOpen) return null;
 
   const handleSpotNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, placeId: e.target.value }));
-    
+    const { value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      placeId: value,
+      spotName: value,
+    }));
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -140,7 +146,7 @@ export default function PostDialog({
     const target = places.find((place) => place.id === placeId);
     setFormData((prev) => ({
       ...prev,
-      placeId,
+      placeId: target?.name ?? placeId,
       spotName: target?.name ?? "",
     }));
   };
@@ -152,30 +158,52 @@ export default function PostDialog({
       return;
     }
 
-    // setIsSubmitting(true);
-    // try {
-    //   if (onSubmit) {
-    //     await onSubmit(formData);
-    //   }
-    //   // リセット
-    //   setFormData({
-    //     placeId: null,
-    //     spotName: "",
-    //     mood: null,
-    //     text: "",
-    //     image: null,
-    //   });
-    //   onClose();
-    // } catch (error) {
-    //   console.error("投稿エラー:", error);
-    //   const message =
-    //     error instanceof Error ? error.message : "投稿に失敗しました";
-    //   alert(message);
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
-    alert("投稿機能を実装してください");
-    onClose();
+    const placeInput = formData.placeId?.trim();
+    if (!placeInput) {
+      alert("スポット名を入力してください");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const currentLocation = await getLocationWithFallback();
+
+      if (
+        typeof currentLocation.latitude !== "number" ||
+        typeof currentLocation.longitude !== "number"
+      ) {
+        throw new Error("位置情報の取得に失敗しました");
+      }
+
+      await onSubmit({
+        ...formData,
+        placeId: placeInput,
+        spotName: formData.spotName.trim() || placeInput,
+        text: formData.text.trim(),
+        location: {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+          name: currentLocation.name,
+          isDefault: currentLocation.isDefault ?? undefined,
+        },
+      });
+      setFormData({
+        placeId: null,
+        spotName: "",
+        mood: null,
+        text: "",
+        image: null,
+        location: null,
+      });
+      onClose();
+    } catch (error) {
+      console.error("投稿エラー:", error);
+      const message =
+        error instanceof Error ? error.message : "投稿に失敗しました";
+      alert(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
