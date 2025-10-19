@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { setupLocationOnLogin, type LocationData } from "@/lib/geolocation";
+import { useEffect, useState } from "react";
+import { setupLocationOnLogin } from "@/lib/geolocation";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +12,50 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
   const [locationSuccess, setLocationSuccess] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const validateSession = async () => {
+      try {
+        const cachedToken = localStorage.getItem("token");
+        if (!cachedToken) {
+          return;
+        }
+
+        setLoading(true);
+        const response = await fetch("/api/auth/session", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${cachedToken}`,
+          },
+          credentials: "include",
+        });
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (response.ok) {
+          router.replace("/feed");
+        } else if (response.status === 401) {
+          localStorage.removeItem("token");
+        }
+      } catch (sessionError) {
+        console.error("セッション検証に失敗しました:", sessionError);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void validateSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
