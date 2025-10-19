@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const limitParam = searchParams.get('limit');
     const sortByParam = searchParams.get('sort_by');
     const cursorParam = searchParams.get('cursor');
-    const moodTypeParam = searchParams.get('mood_type');
+    const moodTypesParam = searchParams.getAll('mood_type'); // 複数の mood_type を取得
 
     const limit = limitParam ? parseInt(limitParam, 10) : 20;
     const cursor = cursorParam ? parseFloat(cursorParam) : undefined;
@@ -36,8 +36,9 @@ export async function GET(request: Request) {
     // 2. データベースから投稿を取得
     // limit + 1 件取得することで、次のページが存在するかを判定する
     const whereCondition: Record<string, unknown> = cursor ? { [sortBy]: { gt: cursor } } : {};
-    if (moodTypeParam) {
-      whereCondition.mood_type = moodTypeParam;
+    if (moodTypesParam.length > 0) {
+      // 複数の mood_type が指定されている場合は IN フィルター
+      whereCondition.mood_type = { in: moodTypesParam };
     }
 
     const posts = await prisma.post.findMany({

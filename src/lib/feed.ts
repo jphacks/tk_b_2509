@@ -21,7 +21,7 @@ export interface ApiResponse {
   };
 }
 
-export async function fetchPosts(sortKey: string | undefined, limit: number = 10, cursor: number | undefined = undefined, moodType?: string): Promise<ApiResponse> {
+export async function fetchPosts(sortKey: string | undefined, limit: number = 10, cursor: number | undefined = undefined, moodTypes?: string[]): Promise<ApiResponse> {
     const params = new URLSearchParams();
     params.append("limit", limit.toString());
     if (sortKey) {
@@ -30,8 +30,11 @@ export async function fetchPosts(sortKey: string | undefined, limit: number = 10
     if (cursor) {
       params.append("cursor", cursor.toString());
     }
-    if (moodType) {
-      params.append("mood_type", moodType);
+    if (moodTypes && moodTypes.length > 0) {
+      // 複数の mood_type をクエリパラメータに追加
+      for (const moodType of moodTypes) {
+        params.append("mood_type", moodType);
+      }
     }
 
   const response = await fetch(`/api/post/getFeed?${params.toString()}`);
