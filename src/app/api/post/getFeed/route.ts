@@ -1,5 +1,6 @@
 // app/api/post/getFeed/route.ts
 
+import { getFeedLogic } from '@/lib/feed';
 import { ALLOWED_SORT_KEYS, SortKey } from '@/lib/feed-types';
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
@@ -19,9 +20,7 @@ export async function GET(request: Request) {
     const sortByParam = searchParams.get('sort_by');
     const cursorParam = searchParams.get('cursor');
 
-    // limit の設定 (デフォルト: 20)
     const limit = limitParam ? parseInt(limitParam, 10) : 20;
-    // cursor の設定 (Float型)
     const cursor = cursorParam ? parseFloat(cursorParam) : undefined;
     
     // sort_by パラメータが指定されていないか、許可リストにない場合はエラー
@@ -31,7 +30,6 @@ export async function GET(request: Request) {
         { status: 400 }
       );
     }
-    // sortBy を 'random_key_1' | 'random_key_2' | ... の型として扱う
     const sortBy = sortByParam as SortKey;
 
     // 2. データベースから投稿を取得
