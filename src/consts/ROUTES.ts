@@ -4,4 +4,6 @@ export const ROUTES = {
   signup: "/signup",
   home: "/feed",
   map: "/search",
+  notification: "/notification",
+  profile: "/profile",
 };

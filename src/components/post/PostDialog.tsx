@@ -1,9 +1,15 @@
 "use client";
 
+import type {
+  MoodType,
+  PlaceOption,
+  PostDialogProps,
+  PostFormData,
+} from "@/lib/post-types";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostFormFields from "./PostFormFields";
-import type { MoodType, PostFormData, PostDialogProps, PlaceOption } from "@/lib/post-types";
+// import type { MoodType, PostFormData, PostDialogProps, PlaceOption } from "@/lib/post-types"; // NOTE: 入れたほうがいいかも？
 
 const DEFAULT_PLACE_PARAMS = {
   lat: 35.6812,
@@ -28,6 +34,19 @@ export default function PostDialog({
   const [placesLoading, setPlacesLoading] = useState(false);
   const [placesError, setPlacesError] = useState<string | null>(null);
 
+  // ダイアログが開いているときは body スクロールを禁止
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  // 場所情報の取得処理
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -74,7 +93,7 @@ export default function PostDialog({
       } catch (error) {
         if (!cancelled) {
           setPlacesError(
-            error instanceof Error ? error.message : "場所の取得に失敗しました",
+            error instanceof Error ? error.message : "場所の取得に失敗しました"
           );
         }
       } finally {
@@ -92,6 +111,11 @@ export default function PostDialog({
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleSpotNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, placeId: e.target.value }));
+    
+  };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
@@ -128,28 +152,30 @@ export default function PostDialog({
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      if (onSubmit) {
-        await onSubmit(formData);
-      }
-      // リセット
-      setFormData({
-        placeId: null,
-        spotName: "",
-        mood: null,
-        text: "",
-        image: null,
-      });
-      onClose();
-    } catch (error) {
-      console.error("投稿エラー:", error);
-      const message =
-        error instanceof Error ? error.message : "投稿に失敗しました";
-      alert(message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    // setIsSubmitting(true);
+    // try {
+    //   if (onSubmit) {
+    //     await onSubmit(formData);
+    //   }
+    //   // リセット
+    //   setFormData({
+    //     placeId: null,
+    //     spotName: "",
+    //     mood: null,
+    //     text: "",
+    //     image: null,
+    //   });
+    //   onClose();
+    // } catch (error) {
+    //   console.error("投稿エラー:", error);
+    //   const message =
+    //     error instanceof Error ? error.message : "投稿に失敗しました";
+    //   alert(message);
+    // } finally {
+    //   setIsSubmitting(false);
+    // }
+    alert("投稿機能を実装してください");
+    onClose();
   };
 
   return (
@@ -159,7 +185,7 @@ export default function PostDialog({
         type="button"
         tabIndex={-1}
         aria-hidden="true"
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+        className="fixed inset-0 bg-white/20 backdrop-blur-sm z-[9998] transition-opacity"
         onClick={onClose}
       />
 
@@ -168,7 +194,7 @@ export default function PostDialog({
         className="
           hidden md:flex fixed md:inset-1/2 md:-translate-x-1/2 md:-translate-y-1/2 
           md:w-full md:max-w-md md:rounded-xl md:shadow-2xl md:flex-col
-          z-50 bg-white outline-none
+          z-[9999] bg-white outline-none
         "
         open={isOpen}
       >
@@ -185,6 +211,7 @@ export default function PostDialog({
 
         <PostFormFields
           formData={formData}
+          onSpotNameChange={handleSpotNameChange}
           isSubmitting={isSubmitting}
           places={places}
           placesLoading={placesLoading}
@@ -205,7 +232,7 @@ export default function PostDialog({
         aria-labelledby="postSheetTitle"
         className="
           fixed bottom-0 left-0 right-0 md:hidden
-          bg-white rounded-t-2xl shadow-2xl z-50
+          bg-white rounded-t-2xl shadow-2xl z-[9999]
           animate-in slide-in-from-bottom-4
           max-h-[90vh] overflow-y-auto
         "
@@ -227,6 +254,7 @@ export default function PostDialog({
         <div className="flex flex-col p-4 gap-4 pb-8">
           <PostFormFields
             formData={formData}
+            onSpotNameChange={handleSpotNameChange}
             isSubmitting={isSubmitting}
             places={places}
             placesLoading={placesLoading}

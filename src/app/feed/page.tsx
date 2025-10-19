@@ -12,7 +12,7 @@ async function fetchPosts(): Promise<PostData[]> {
 
   // --- 本来はここでDBからデータを取得する ---
   // const data = await db.posts.findMany(...);
-  
+
   // --- ここから下はダミーデータです ---
   const dummyData: PostData[] = [
     {
