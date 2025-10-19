@@ -1,7 +1,7 @@
 "use client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Heart } from "lucide-react";
+import { Heart, MapPin } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 // shadcn/uiコンポーネント
@@ -29,7 +29,6 @@ export function ReviewCard({
   username,
   className,
 }: ReviewCardProps) {
-
   // liked: いいね済みか (true/false)
   // currentCount: 現在のいいね数
   const [liked, setLiked] = useState(false);
@@ -103,11 +102,11 @@ export function ReviewCard({
       </CardContent>
 
       {/* ---------------------------------- */}
-      {/* フッター: リアクション + 投稿者     */}
+      {/* フッター: リアクション + 経路検索 + 投稿者     */}
       {/* ---------------------------------- */}
-      <CardFooter className="flex justify-between items-center">
-        {/* リアクション */}
-        <div>
+      <CardFooter className="flex justify-between items-center gap-2">
+        {/* リアクション + 経路検索 */}
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -125,6 +124,21 @@ export function ReviewCard({
               aria-hidden="true"
             />
             <span>{currentCount}</span>
+          </Button>
+
+          {/* 経路検索ボタン */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-blue-500"
+            onClick={() => {
+              // TODO: GoogleマップAPIで現在地からの経路検索を実装
+              console.log(`${placeName}への経路検索`);
+            }}
+            aria-label={`${placeName}への経路を検索`}
+          >
+            <MapPin className="w-4 h-4" aria-hidden="true" />
+            <span className="text-xs">経路</span>
           </Button>
         </div>
 
