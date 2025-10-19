@@ -11,21 +11,12 @@ export default function PostFormFields({
   formData,
   isSubmitting,
   onSpotNameChange,
-  places,
-  placesLoading,
-  placesError,
-  onPlaceSelect,
   onTextChange,
   onMoodSelect,
   onImageSelect,
   onCancel,
   onSubmit,
 }: PostFormFieldsProps) {
-  const handlePlaceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const { value } = event.target;
-    onPlaceSelect(value ? value : null);
-  };
-
   return (
     <form onSubmit={onSubmit} className="flex flex-col flex-1 p-4 gap-4">
       {/* スポット名 */}
@@ -50,26 +41,6 @@ export default function PostFormFields({
         {
           // 上が正解、下のselectを消したい
         }
-        {/* <select
-          id="placeId"
-          value={formData.placeId ?? ""}
-          onChange={handlePlaceChange}
-          disabled={placesLoading || isSubmitting || places.length === 0}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100"
-        >
-          <option value="">スポットを選択してください</option>
-          {places.map((place) => (
-            <option key={place.id} value={place.id}>
-              {place.name}
-            </option>
-          ))}
-        </select>
-        {placesLoading && (
-          <p className="mt-1 text-xs text-slate-500">スポットを読み込み中...</p>
-        )}
-        {placesError && (
-          <p className="mt-1 text-xs text-red-600">{placesError}</p>
-        )} */}
       </div>
 
       {/* 気分選択 */}
