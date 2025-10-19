@@ -9,6 +9,7 @@ import type {
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostFormFields from "./PostFormFields";
+// import type { MoodType, PostFormData, PostDialogProps, PlaceOption } from "@/lib/post-types"; // NOTE: 入れたほうがいいかも？
 
 const DEFAULT_PLACE_PARAMS = {
   lat: 35.6812,

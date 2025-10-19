@@ -3,6 +3,7 @@
 import type { PostFormFieldsProps } from "@/lib/post-types";
 import ImageUpload from "./ImageUpload";
 import MoodSelector from "./MoodSelector";
+// import type { MoodType, PostFormFieldsProps } from "@/lib/post-types"; // NOTE: 入れたほうがいいかも？
 
 const MAX_COMMENT_LENGTH = 60;
 

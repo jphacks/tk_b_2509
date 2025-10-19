@@ -5,8 +5,10 @@ import {
   type CreatePostRequestBody,
   type MoodType,
   type ParsedCreatePostBody,
+  type ParsedCreatePostBodyWithLocation,
   REQUIRED_CREATE_POST_FIELDS,
 } from "@/lib/post-types";
+import { SpatialQueries } from "@/lib/spatial";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -37,8 +39,10 @@ function parseBigIntId(value: unknown): bigint | null {
 
 function validateRequestBody(
   body: CreatePostRequestBody,
-): ParsedCreatePostBody | null {
-  const missingField = REQUIRED_CREATE_POST_FIELDS.find(
+): ParsedCreatePostBody | ParsedCreatePostBodyWithLocation | null {
+  // 共通の必須フィールド検証
+  const requiredFields: Array<keyof CreatePostRequestBody> = ["moodType", "contents"];
+  const missingField = requiredFields.find(
     (field) => body[field] === undefined,
   );
   if (missingField) {
@@ -52,9 +56,8 @@ function validateRequestBody(
   ) as MoodType | undefined;
   const contents =
     typeof body.contents === "string" ? body.contents.trim() : "";
-  const placeId = parseBigIntId(body.placeId);
 
-  if (!moodType || !contents || placeId === null) {
+  if (!moodType || !contents) {
     return null;
   }
 
@@ -75,12 +78,52 @@ function validateRequestBody(
     }
   }
 
-  return {
-    moodType,
-    contents,
-    placeId,
-    imageUrl,
-  };
+  // placeIdが提供された場合の従来の検証
+  if (body.placeId !== undefined) {
+    const placeId = parseBigIntId(body.placeId);
+    if (placeId === null) {
+      return null;
+    }
+    return {
+      moodType,
+      contents,
+      placeId,
+      imageUrl,
+    };
+  }
+
+  // locationが提供された場合の検証
+  if (body.location !== undefined) {
+    if (
+      typeof body.location !== "object" ||
+      body.location === null ||
+      typeof body.location.latitude !== "number" ||
+      typeof body.location.longitude !== "number"
+    ) {
+      return null;
+    }
+
+    const { latitude, longitude, name } = body.location;
+
+    // 緯度経度の有効範囲チェック
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      return null;
+    }
+
+    return {
+      moodType,
+      contents,
+      location: {
+        latitude,
+        longitude,
+        name: typeof name === "string" ? name.trim() : undefined,
+      },
+      imageUrl,
+    };
+  }
+
+  // placeIdもlocationも提供されていない場合はエラー
+  return null;
 }
 
 function generateRandomKeys(): [number, number, number, number, number] {
@@ -98,12 +141,26 @@ function generateRandomKeys(): [number, number, number, number, number] {
  * POST /api/post/createPost
  * 認証必須（Cookie もしくは Authorization ヘッダー）
  *
- * リクエスト例:
+ * リクエスト例（placeId指定）:
  * ```json
  * {
  *   "moodType": "relax",
  *   "contents": "今日は素敵なカフェを見つけました！",
  *   "placeId": "12345",
+ *   "imageUrl": "https://example.com/photo.jpg"
+ * }
+ * ```
+ *
+ * リクエスト例（現在地から自動作成）:
+ * ```json
+ * {
+ *   "moodType": "relax",
+ *   "contents": "今日は素敵なカフェを見つけました！",
+ *   "location": {
+ *     "latitude": 35.6812,
+ *     "longitude": 139.7671,
+ *     "name": "東京駅周辺"
+ *   },
  *   "imageUrl": "https://example.com/photo.jpg"
  * }
  * ```
@@ -118,7 +175,7 @@ function generateRandomKeys(): [number, number, number, number, number] {
  *     "contents": "今日は素敵なカフェを見つけました！",
  *     "imageUrl": "https://example.com/photo.jpg",
  *     "placeId": "12345",
- *     "placeName": "東京駅",
+ *     "placeName": "東京駅周辺",
  *     "reactionCount": 0,
  *     "author": {
  *       "name": "Kevin",
@@ -174,18 +231,63 @@ export async function POST(request: NextRequest) {
     generateRandomKeys();
 
   try {
-    const place = await prisma.place.findUnique({
-      where: { id: validatedBody.placeId },
-      select: { id: true, name: true },
-    });
+    let placeId: bigint;
+    let placeName: string;
 
-    if (!place) {
+    // placeIdが直接提供された場合
+    if ("placeId" in validatedBody) {
+      placeId = validatedBody.placeId;
+
+      const place = await prisma.place.findUnique({
+        where: { id: placeId },
+        select: { id: true, name: true },
+      });
+
+      if (!place) {
+        return NextResponse.json(
+          {
+            error: "指定された場所が見つかりません",
+            code: "PLACE_NOT_FOUND",
+          },
+          { status: 404 },
+        );
+      }
+
+      placeName = place.name;
+    }
+    // locationが提供された場合（自動的にPlaceを作成）
+    else if ("location" in validatedBody) {
+      const { latitude, longitude, name } = validatedBody.location;
+
+      // 場所名が指定されていない場合はデフォルト値を設定
+      const locationName = name || `位置情報 (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+
+      try {
+        const createdPlace = await SpatialQueries.createPlace(
+          locationName,
+          longitude,
+          latitude,
+        );
+
+        placeId = BigInt(createdPlace.id);
+        placeName = createdPlace.name;
+      } catch (error) {
+        console.error("Place creation error:", error);
+        return NextResponse.json(
+          {
+            error: "位置情報の登録に失敗しました",
+            code: "PLACE_CREATE_FAILED",
+          },
+          { status: 500 },
+        );
+      }
+    } else {
       return NextResponse.json(
         {
-          error: "指定された場所が見つかりません",
-          code: "PLACE_NOT_FOUND",
+          error: "場所情報が不正です",
+          code: "INVALID_LOCATION",
         },
-        { status: 404 },
+        { status: 400 },
       );
     }
 
@@ -194,7 +296,7 @@ export async function POST(request: NextRequest) {
         mood_type: validatedBody.moodType,
         contents: validatedBody.contents,
         img: validatedBody.imageUrl,
-        placeId: validatedBody.placeId,
+        placeId,
         authorId,
         random_key_1: randomKey1,
         random_key_2: randomKey2,
@@ -230,8 +332,8 @@ export async function POST(request: NextRequest) {
           moodType: createdPost.mood_type,
           contents: createdPost.contents,
           imageUrl: createdPost.img,
-          placeId: place.id.toString(),
-          placeName: place.name,
+          placeId: placeId.toString(),
+          placeName,
           postedAt: createdPost.post_at.toISOString(),
           reactionCount: createdPost._count.reactions,
           author: {
