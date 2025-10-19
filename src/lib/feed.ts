@@ -1,6 +1,7 @@
 import { ALLOWED_SORT_KEYS, type SortKey } from "./feed-types";
 import type { MoodType } from "./post-types";
 import { prisma } from "./prisma";
+import { Prisma } from "@prisma/client";
 
 export interface PostData {
   id: number;
@@ -23,22 +24,23 @@ export interface ApiResponse {
   };
 }
 
+// ---- 追加：POINT 解析の正規表現をモジュール定数に ----
+const POINT_PATTERN = /POINT\s*\(\s*([-+]?\d*\.?\d+)\s+([-+]?\d*\.?\d+)\s*\)/;
 export async function fetchPosts(
   sortKey: string | undefined,
   limit: number = 10,
   cursor: number | undefined = undefined,
-  moodTypes?: string[],
+  moodTypes?: string[]
 ): Promise<ApiResponse> {
   const params = new URLSearchParams();
   params.append("limit", limit.toString());
   if (sortKey) {
     params.append("sort_by", sortKey);
   }
-  if (cursor) {
+  if (cursor !== undefined) {
     params.append("cursor", cursor.toString());
   }
   if (moodTypes && moodTypes.length > 0) {
-    // 複数の mood_type をクエリパラメータに追加
     for (const moodType of moodTypes) {
       params.append("mood_type", moodType);
     }
@@ -64,55 +66,21 @@ export async function getFeedLogic(
   limit: number,
   cursor?: number
 ): Promise<ApiResponse> {
-  // 1. データベースから取得 - raw SQL で geom も取得
-  let query: string;
-
-  if (cursor !== undefined) {
-    query = `
-      SELECT 
-        p.id,
-        p.mood_type,
-        p.contents,
-        p.img,
-        p."${sortBy}" as sort_key,
-        pl.name as place_name,
-        ST_AsText(pl.geom) as geom_text,
-        u.name as author_name,
-        u.avatar as author_avatar,
-        COUNT(r.id) as reaction_count
-      FROM "Post" p
-      JOIN "Place" pl ON p."placeId" = pl.id
-      JOIN "User" u ON p."authorId" = u.id
-      LEFT JOIN "Reaction" r ON p.id = r."postId"
-      WHERE p."${sortBy}" > ${cursor}
-      GROUP BY p.id, pl.id, u.id
-      ORDER BY p."${sortBy}" ASC
-      LIMIT ${limit + 1}
-    `;
-  } else {
-    query = `
-      SELECT 
-        p.id,
-        p.mood_type,
-        p.contents,
-        p.img,
-        p."${sortBy}" as sort_key,
-        pl.name as place_name,
-        ST_AsText(pl.geom) as geom_text,
-        u.name as author_name,
-        u.avatar as author_avatar,
-        COUNT(r.id) as reaction_count
-      FROM "Post" p
-      JOIN "Place" pl ON p."placeId" = pl.id
-      JOIN "User" u ON p."authorId" = u.id
-      LEFT JOIN "Reaction" r ON p.id = r."postId"
-      GROUP BY p.id, pl.id, u.id
-      ORDER BY p."${sortBy}" ASC
-      LIMIT ${limit + 1}
-    `;
+  // ---- 重要：ソートキーのバリデーション（識別子はパラメータ化できないため）----
+  if (!ALLOWED_SORT_KEYS.includes(sortBy)) {
+    throw new Error("Invalid sort key");
   }
+  // カラム名は安全なリテラルとして挿入
+  const col = Prisma.raw(`"${sortBy}"`);
 
-  const postsFromDb = await prisma.$queryRawUnsafe<
+  // ---- 重要：cursor の検証（数値前提のため）----
+  if (cursor !== undefined && !Number.isFinite(cursor)) {
+    throw new Error("Invalid cursor");
+  }
+  const parsedCursor = cursor as number | undefined;
+
+  // ---- ここが核心：$queryRawUnsafe の撤去 → $queryRaw(Prisma.sql`...`) でパラメータ化 ----
+  const postsFromDb = await prisma.$queryRaw<
     Array<{
       id: string;
       mood_type: string;
@@ -125,7 +93,31 @@ export async function getFeedLogic(
       author_avatar: string | null;
       reaction_count: string;
     }>
-  >(query);
+  >(Prisma.sql`
+    SELECT 
+      p.id,
+      p.mood_type,
+      p.contents,
+      p.img,
+      p.${col} as sort_key,
+      pl.name as place_name,
+      ST_AsText(pl.geom) as geom_text,
+      u.name as author_name,
+      u.avatar as author_avatar,
+      COUNT(r.id) as reaction_count
+    FROM "Post" p
+    JOIN "Place" pl ON p."placeId" = pl.id
+    JOIN "User"  u  ON p."authorId" = u.id
+    LEFT JOIN "Reaction" r ON p.id = r."postId"
+    ${
+      parsedCursor !== undefined
+        ? Prisma.sql`WHERE p.${col} > ${parsedCursor}`
+        : Prisma.empty
+    }
+    GROUP BY p.id, pl.id, u.id
+    ORDER BY p.${col} ASC
+    LIMIT ${limit + 1}
+  `);
 
   // 2. 次ページのカーソルを決定
   let nextCursor: number | null = null;
@@ -138,28 +130,34 @@ export async function getFeedLogic(
   }
 
   // 3. フロントエンド用に整形
-  const formattedPosts: PostData[] = postsForResponse.map((post) => {
-    // POINT(longitude latitude) 形式から緯度経度を抽出
-    const pointPattern =
-      /POINT\s*\(\s*([-+]?\d*\.?\d+)\s+([-+]?\d*\.?\d+)\s*\)/;
-    const match = post.geom_text.match(pointPattern);
-    const [longitude, latitude] = match
-      ? [Number(match[1]), Number(match[2])]
-      : [0, 0];
+  //    不正な POINT は [0,0] フォールバックをやめてスキップ（誤表示防止）
+  const formattedPosts: PostData[] = postsForResponse
+    .map((post) => {
+      const match = POINT_PATTERN.exec(post.geom_text ?? "");
+      if (!match) {
+        // 解析できない座標はスキップ
+        return null;
+      }
+      const longitude = Number(match[1]);
+      const latitude = Number(match[2]);
+      if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) {
+        return null;
+      }
 
-    return {
-      id: Number(post.id),
-      placeName: post.place_name,
-      moodType: post.mood_type as MoodType,
-      contents: post.contents,
-      imageUrl: post.img,
-      reactionCount: Number(post.reaction_count),
-      userAvatarUrl: post.author_avatar,
-      username: post.author_name,
-      latitude,
-      longitude,
-    };
-  });
+      return {
+        id: Number(post.id),
+        placeName: post.place_name,
+        moodType: post.mood_type as MoodType,
+        contents: post.contents,
+        imageUrl: post.img,
+        reactionCount: Number(post.reaction_count),
+        userAvatarUrl: post.author_avatar,
+        username: post.author_name,
+        latitude,
+        longitude,
+      } as PostData;
+    })
+    .filter((p): p is PostData => p !== null);
 
   return {
     posts: formattedPosts,

@@ -121,6 +121,7 @@ export async function GET(request: Request) {
     });
 
     // 5. 最終的なJSONレスポンスを返す
+    // 5. 最終的なJSONレスポンスを返す
     return NextResponse.json({
       posts: formattedPosts,
       nextPageState: {
@@ -128,6 +129,7 @@ export async function GET(request: Request) {
         cursor: nextCursor, // 次のページがない場合は null
       },
     });
+  } catch (error) {
   } catch (error) {
     console.error("Failed to fetch feed:", error);
     return NextResponse.json(
