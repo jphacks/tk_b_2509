@@ -1,4 +1,5 @@
-import { GoogleMap, MapPin } from '../../components/Map/GoogleMap';
+import { GoogleMap } from '../../components/Map/GoogleMap';
+import type { MapPin } from '@/lib/map-types';
 
 function App() {
   const samplePins: MapPin[] = [

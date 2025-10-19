@@ -3,11 +3,7 @@
 import Image from "next/image";
 import { useState, useRef } from "react";
 import { Upload, X } from "lucide-react";
-
-interface ImageUploadProps {
-  selectedImage: File | null;
-  onImageSelect: (file: File | null) => void;
-}
+import type { ImageUploadProps } from "@/lib/post-types";
 
 export default function ImageUpload({
   selectedImage,

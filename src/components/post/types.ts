@@ -1,16 +1,3 @@
-import type { MoodType } from "@/lib/post-types";
-
-export type Mood = MoodType;
-
-export interface PostFormData {
-  placeId: string | null;
-  spotName: string;
-  mood: Mood | null;
-  text: string;
-  image: File | null;
-}
-
-export interface PlaceOption {
-  id: string;
-  name: string;
-}
+// このファイルは型定義の統合により不要になりました
+// 必要な型定義は @/lib/post-types からインポートしてください
+export type { MoodType as Mood, PostFormData, PlaceOption } from "@/lib/post-types";

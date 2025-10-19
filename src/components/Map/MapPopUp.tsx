@@ -1,6 +1,4 @@
-interface MapPopupProps {
-  children?: React.ReactNode;
-}
+import type { MapPopupProps } from '@/lib/map-types';
 
 export function MapPopup({ children }: MapPopupProps) {
   return (
