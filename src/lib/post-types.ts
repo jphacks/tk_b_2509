@@ -64,6 +64,8 @@ export interface PostData {
   reactionCount: number;
   userAvatarUrl: string | null;
   username: string;
+  latitude: number;
+  longitude: number;
 }
 
 // 投稿フォーム関連の型定義
