@@ -2,24 +2,7 @@
 import { AdvancedMarker, APIProvider, Map } from '@vis.gl/react-google-maps';
 // InfoWindow と useState は不要になったため削除
 import { MapPopup } from './MapPopUp';
-
-export interface MapPin {
-  id: string;
-  position: {
-    lat: number;
-    lng: number;
-  };
-  content?: React.ReactNode;
-}
-
-interface GoogleMapProps {
-  center?: {
-    lat: number;
-    lng: number;
-  };
-  zoom?: number;
-  pins?: MapPin[];
-}
+import type { MapPin, GoogleMapProps } from '@/lib/map-types';
 
 export function GoogleMap({
   center = { lat: 35.6812, lng: 139.7671 },

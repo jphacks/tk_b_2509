@@ -3,13 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostFormFields from "./PostFormFields";
-import type { Mood, PlaceOption, PostFormData } from "./types";
-
-interface PostDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit?: (data: PostFormData) => Promise<void>;
-}
+import type { MoodType, PostFormData, PostDialogProps, PlaceOption } from "@/lib/post-types";
 
 const DEFAULT_PLACE_PARAMS = {
   lat: 35.6812,
@@ -115,7 +109,7 @@ export default function PostDialog({
     }
   };
 
-  const handleMoodSelect = (mood: Mood) => {
+  const handleMoodSelect = (mood: MoodType) => {
     setFormData((prev) => ({ ...prev, mood }));
   };
 

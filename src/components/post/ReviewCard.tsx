@@ -13,19 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils"; // shadcn/ui のセットアップで導入されるはずです
-
-// コンポーネントが受け取るprops（プロパティ）の型を定義
-interface ReviewCardProps {
-  placeName: string;
-  badgeUrl: string;
-  reviewText: string;
-  imageUrl?: string | null; // 画像はオプショナル（無い場合がある）
-  reactionCount: number;
-  userAvatarUrl: string | null;
-  userAvatarFallback: string; // アバター画像読み込み失敗時の表示（例: "田中" -> "TN"）
-  username: string;
-  className?: string; // 外部から追加のCSSクラスを渡せるように
-}
+import type { ReviewCardProps } from "@/lib/post-types";
 
 /**
  * おすすめ作業場所を表示するためのカードコンポーネント

@@ -1,9 +1,7 @@
 import { FeedList } from "@/components/post/FeedList";
-import { getRandomSortKey, getFeedLogic, PostData } from "@/lib/feed";
+import { getRandomSortKey, getFeedLogic } from "@/lib/feed";
 import { SortKey } from "@/lib/feed-types";
-
-// Use the PostData type from lib/feed for consistency
-type LocalPostData = PostData;
+import type { PostData } from "@/lib/post-types";
 
 /**
  * 1. データベースから投稿データを取得する関数（ダミー）

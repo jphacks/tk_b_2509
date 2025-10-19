@@ -5,34 +5,15 @@ import { PostDialog } from "@/components/post";
 import { Loader2, Plus } from "lucide-react"; // shadcn/ui 標準のスピナーアイコン
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer"; // 無限スクロール用
-import type { PostFormData } from "@/components/post";
+import type { PostFormData, PostData, FeedListProps } from "@/lib/post-types";
 import { getRandomSortKey, fetchPosts } from "@/lib/feed";
 import { SortKey } from "@/lib/feed-types";
 import { createPost } from "@/lib/api/posts";
-
-// import { PostData } from "@/types"; // 型定義をインポート
-
-/* --- 型定義 (page.tsx と同じもの) --- */
-interface PostData {
-  id: number;
-  placeName: string;
-  mood_type: string;
-  contents: string;
-  imageUrl: string | null;
-  reactionCount: number;
-  userAvatarUrl: string | null;
-  username: string;
-}
 
 /* --- ヘルパー関数 (page.tsx と同じもの) --- */
 function getAvatarFallback(username: string): string {
   if (!username) return "??";
   return username.substring(0, 2).toUpperCase();
-}
-
-// このコンポーネントが受け取る Props の型
-interface FeedListProps {
-  initialPosts: PostData[];
 }
 
 export function FeedList({ initialPosts }: FeedListProps) {
@@ -105,7 +86,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
       const newPost: PostData = {
         id: Math.random(), // IDはユニークにする
         placeName: "追加読み込みされたカフェ",
-        mood_type: "demo",
+        moodType: "demo",
         contents: "これは無限スクロールで追加された投稿です。",
         imageUrl: null,
         reactionCount: 0,
@@ -227,7 +208,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
           const newPost: PostData = {
             id: Number(createdPost.id),
             placeName: createdPost.placeName,
-            mood_type: createdPost.moodType,
+            moodType: createdPost.moodType,
             contents: createdPost.contents,
             imageUrl: createdPost.imageUrl,
             reactionCount: createdPost.reactionCount,
