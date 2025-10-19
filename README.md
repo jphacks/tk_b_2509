@@ -1,6 +1,6 @@
 # SerenSpot - 作業スポットをシェアしよう。
 
-[![イメージ図](./docs/image.png)](https://www.youtube.com/watch?v=lA9EluZugD8)
+https://github.com/user-attachments/assets/424f172a-eda7-494f-8156-121ea1fa6bf6
 
 ## 製品概要
 
