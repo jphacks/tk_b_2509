@@ -64,6 +64,8 @@ export interface PostData {
   reactionCount: number;
   userAvatarUrl: string | null;
   username: string;
+  latitude: number;
+  longitude: number;
 }
 
 // 投稿フォーム関連の型定義
@@ -116,6 +118,7 @@ export interface ImageUploadProps {
 }
 
 export interface ReviewCardProps {
+  postId: number;
   placeName: string;
   badgeUrl: string;
   reviewText: string;
@@ -124,5 +127,7 @@ export interface ReviewCardProps {
   userAvatarUrl: string | null;
   userAvatarFallback: string;
   username: string;
+  latitude: number;
+  longitude: number;
   className?: string;
 }
