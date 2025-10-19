@@ -85,7 +85,7 @@ export default async function MyPostsPage() {
       <div className="min-h-screen bg-background pb-24 md:pb-0">
         <div className="max-w-2xl mx-auto">
           {/* ユーザープロフィールヘッダー */}
-          <UserProfileHeader username={user.name} avatarUrl={user.avatar} />
+          <UserProfileHeader userId={user.id.toString()} username={user.name} avatarUrl={user.avatar} />
 
           {/* 区切り線 */}
           <div className="border-t border-slate-200" />

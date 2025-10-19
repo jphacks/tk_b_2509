@@ -277,6 +277,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
 
           const newPost: PostData = {
             id: Number(createdPost.id),
+            placeId: Number(createdPost.placeId),
             placeName: createdPost.placeName,
             moodType: createdPost.moodType,
             contents: createdPost.contents,
