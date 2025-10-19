@@ -5,6 +5,8 @@
       "main": true,
       "develop": true,
       "feat/*": false,
+      "fix/*": false,
+      "hotfix/*": false,
       "*": false
     }
   }
