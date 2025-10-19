@@ -107,7 +107,6 @@ export function ReviewCard({
                 width={300} // width/heightはアスペクト比の維持に必要
                 height={300}
                 className="rounded-lg object-cover w-full aspect-square" // 正方形を担保
-                unoptimized
               />
             </div>
           )}
