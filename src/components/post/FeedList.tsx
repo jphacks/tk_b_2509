@@ -1,19 +1,34 @@
 "use client";
 
-import { ReviewCard } from "@/components/post/ReviewCard";
 import { PostDialog } from "@/components/post";
+import { ReviewCard } from "@/components/post/ReviewCard";
+import { createPost } from "@/lib/api/posts";
+import { fetchPosts, getRandomSortKey } from "@/lib/feed";
+import { SortKey } from "@/lib/feed-types";
+import type { FeedListProps, PostData, PostFormData } from "@/lib/post-types";
 import { Loader2, Plus } from "lucide-react"; // shadcn/ui 標準のスピナーアイコン
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer"; // 無限スクロール用
-import type { PostFormData, PostData, FeedListProps } from "@/lib/post-types";
-import { getRandomSortKey, fetchPosts } from "@/lib/feed";
-import { SortKey } from "@/lib/feed-types";
-import { createPost } from "@/lib/api/posts";
 
 /* --- ヘルパー関数 (page.tsx と同じもの) --- */
 function getAvatarFallback(username: string): string {
   if (!username) return "??";
   return username.substring(0, 2).toUpperCase();
+}
+
+export function getBadgeImageUrl(moodType: string): string {
+  switch (moodType) {
+    case "relax":
+      return "/relax_badge.png";
+    case "focus":
+      return "/focus_badge.png";
+    case "idea":
+      return "/idea_badge.png";
+    case "chat":
+      return "/chat_badge.png";
+    default:
+      return ""; // デフォルトのバッジ画像
+  }
 }
 
 export function FeedList({ initialPosts }: FeedListProps) {
@@ -78,27 +93,23 @@ export function FeedList({ initialPosts }: FeedListProps) {
     if (loadMoreInView && !isRefreshing) {
       console.log("追加fetch"); // ★ 追加フェッチ処理の実行
 
-      // (ダミー) ここで fetch した追加データ (newPosts) を
-      // setPosts((prevPosts) => [...prevPosts, ...newPosts]);
-      // のようにして既存のリストに追加する
-
-      // (例) ダミーデータを1件追加するデモ
-      const newPost: PostData = {
-        id: Math.random(), // IDはユニークにする
-        placeName: "追加読み込みされたカフェ",
-        moodType: "demo",
-        contents: "これは無限スクロールで追加された投稿です。",
-        imageUrl: null,
-        reactionCount: 0,
-        userAvatarUrl: null,
-        username: "System",
-      };
-
-      // 1秒後にダミーデータを追加
-      setTimeout(() => {
-        setPosts((prevPosts) => [...prevPosts, newPost]);
-      }, 1000);
+      // 監視対象が見えて、かつ更新中でない（多重フェッチ防止）
+    if (loadMoreInView && !isRefreshing) {
+      console.log("追加fetch"); // ★ 追加フェッチ処理の実行
+      setIsRefreshing(true); // フェッチ中フラグを立てる
+      if (cursor === undefined) {
+        setIsRefreshing(false); // カーソルがない場合は何もしない
+        return;
+      }
+      fetchPosts(sortBy, 10, cursor).then((data) => {
+        setPosts((prevPosts) => [...prevPosts, ...data.posts]);
+        setCursor(data.nextPageState.cursor ?? undefined);
+        setIsRefreshing(false); // フェッチ完了でフラグを下ろす
+      }).catch(() => {
+        setIsRefreshing(false); // エラー時もフラグを下ろす
+      });
     }
+  }
   }, [loadMoreInView, isRefreshing]);
 
   const fileToDataUrl = async (file: File): Promise<string> =>
@@ -124,7 +135,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
           <ReviewCard
             key={post.id}
             placeName={post.placeName}
-            badgeUrl="/vercel.svg" // 仮のバッジ
+            badgeUrl={getBadgeImageUrl(post.moodType)}
             reviewText={post.contents}
             imageUrl={post.imageUrl}
             reactionCount={post.reactionCount}
@@ -148,7 +159,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
         <ReviewCard
           key={post.id}
           placeName={post.placeName}
-          badgeUrl="/vercel.svg"
+          badgeUrl={getBadgeImageUrl(post.moodType)}
           reviewText={post.contents}
           imageUrl={post.imageUrl}
           reactionCount={post.reactionCount}

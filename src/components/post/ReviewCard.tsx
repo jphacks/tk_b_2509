@@ -12,8 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils"; // shadcn/ui のセットアップで導入されるはずです
 import type { ReviewCardProps } from "@/lib/post-types";
+import { cn } from "@/lib/utils"; // shadcn/ui のセットアップで導入されるはずです
 
 /**
  * おすすめ作業場所を表示するためのカードコンポーネント
@@ -58,11 +58,11 @@ export function ReviewCard({
           <CardTitle>{placeName}</CardTitle>
           {/* バッジ（Next.jsのImageコンポーネントを使用） */}
           <Image
-            src={badgeUrl}
+            src={badgeUrl} // TODO: 変更
             alt="バッジ"
             width={40} // バッジのサイズに合わせて調整してください
             height={40} // バッジのサイズに合わせて調整してください
-            className="rounded-full" // バッジが円形や楕円形の場合
+            // className="rounded-full" // バッジが円形や楕円形の場合
           />
         </div>
       </CardHeader>
