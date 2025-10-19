@@ -73,12 +73,7 @@ export async function GET(request: Request) {
       const lastPost = posts.pop(); // 余分な1件を配列から削除
       if (lastPost) {
         // ★修正点: 次のカーソルは、ソートに使用したキー(random_key_x)の値にする
-        const value = lastPost[sortBy];
-        if (typeof value === 'number' && Number.isFinite(value)) {
-          nextCursor = value;
-        } else {
-          nextCursor = null;
-        }
+        nextCursor = lastPost[sortBy]; 
       }
     }
 
