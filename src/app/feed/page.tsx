@@ -1,6 +1,6 @@
 import { FeedList } from "@/components/post/FeedList";
-import { getRandomSortKey, getFeedLogic } from "@/lib/feed";
-import { SortKey } from "@/lib/feed-types";
+import { getFeedLogic, getRandomSortKey } from "@/lib/feed";
+import type { SortKey } from "@/lib/feed-types";
 
 /**
  * フィード画面ページコンポーネント (サーバーコンポーネント)
@@ -14,7 +14,7 @@ export default async function FeedPage() {
   const initialFeedData = await getFeedLogic(
     sortKey,
     10, // 初回読み込み件数を10件に（適宜調整してください）
-    undefined // 初回なのでカーソルはなし
+    undefined, // 初回なのでカーソルはなし
   );
 
   return (

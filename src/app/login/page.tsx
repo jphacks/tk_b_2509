@@ -88,19 +88,21 @@ export default function LoginPage() {
         const locationResult = await setupLocationOnLogin();
 
         // 位置情報をlocalStorageに保存（他のページで使用するため）
-        localStorage.setItem("userLocation", JSON.stringify(locationResult.location));
+        localStorage.setItem(
+          "userLocation",
+          JSON.stringify(locationResult.location),
+        );
         localStorage.setItem("locationPermission", locationResult.permission);
 
         // ユーザーに結果を通知
         setLocationMessage(locationResult.message);
-        setLocationSuccess(locationResult.permission === 'granted');
+        setLocationSuccess(locationResult.permission === "granted");
 
         // 3秒後にメッセージを自動的に消去
         setTimeout(() => {
           setLocationMessage("");
           setLocationSuccess(null);
         }, 3000);
-
       } catch (locationError) {
         console.error("位置情報設定エラー:", locationError);
         // 位置情報設定に失敗してもログインは継続
@@ -174,20 +176,24 @@ export default function LoginPage() {
 
             {/* 位置情報設定メッセージ */}
             {locationMessage && (
-              <div className={`p-4 border rounded-lg ${
-                locationSuccess === true
-                  ? 'bg-green-50 border-green-200'
-                  : locationSuccess === false
-                  ? 'bg-yellow-50 border-yellow-200'
-                  : 'bg-blue-50 border-blue-200'
-              }`}>
-                <p className={`text-sm ${
+              <div
+                className={`p-4 border rounded-lg ${
                   locationSuccess === true
-                    ? 'text-green-700'
+                    ? "bg-green-50 border-green-200"
                     : locationSuccess === false
-                    ? 'text-yellow-700'
-                    : 'text-blue-700'
-                }`}>
+                      ? "bg-yellow-50 border-yellow-200"
+                      : "bg-blue-50 border-blue-200"
+                }`}
+              >
+                <p
+                  className={`text-sm ${
+                    locationSuccess === true
+                      ? "text-green-700"
+                      : locationSuccess === false
+                        ? "text-yellow-700"
+                        : "text-blue-700"
+                  }`}
+                >
                   {locationMessage}
                 </p>
               </div>

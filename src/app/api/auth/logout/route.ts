@@ -16,7 +16,7 @@ function buildLogoutResponse() {
   const response = NextResponse.json({
     success: true,
     message: "ログアウトが完了しました",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
   response.cookies.set(ACCESS_TOKEN_COOKIE_NAME, "", {
     ...CLEAR_ACCESS_COOKIE_OPTIONS,

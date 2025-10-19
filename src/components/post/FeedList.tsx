@@ -139,24 +139,33 @@ export function FeedList({ initialPosts }: FeedListProps) {
   const handleMoodTypeToggle = (moodType: string) => {
     setSelectedMoodTypes((prev) => {
       const updated = prev.includes(moodType)
-        ? prev.filter(m => m !== moodType) // 選択解除
+        ? prev.filter((m) => m !== moodType) // 選択解除
         : [...prev, moodType]; // 選択
-      
+
       // フィルター状態が変わったら投稿を再取得
       setIsRefreshing(true);
       setCursor(undefined); // リセット
-      
-      fetchPosts(sortBy, 10, undefined, updated.length > 0 ? updated : undefined).then((data) => {
-        setPosts(data.posts.map(post => ({
-          ...post,
-          mood_type: post.moodType
-        })));
-        setCursor(data.nextPageState.cursor || undefined);
-        setIsRefreshing(false);
-      }).catch(() => {
-        setIsRefreshing(false);
-      });
-      
+
+      fetchPosts(
+        sortBy,
+        10,
+        undefined,
+        updated.length > 0 ? updated : undefined,
+      )
+        .then((data) => {
+          setPosts(
+            data.posts.map((post) => ({
+              ...post,
+              mood_type: post.moodType,
+            })),
+          );
+          setCursor(data.nextPageState.cursor || undefined);
+          setIsRefreshing(false);
+        })
+        .catch(() => {
+          setIsRefreshing(false);
+        });
+
       return updated;
     });
   };

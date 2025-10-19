@@ -94,7 +94,10 @@ function validateRequestBody(
   body: CreatePostRequestBody,
 ): ParsedCreatePostBody | ParsedCreatePostBodyWithLocation | null {
   // 共通の必須フィールド検証
-  const requiredFields: Array<keyof CreatePostRequestBody> = ["moodType", "contents"];
+  const requiredFields: Array<keyof CreatePostRequestBody> = [
+    "moodType",
+    "contents",
+  ];
   const missingField = requiredFields.find(
     (field) => body[field] === undefined,
   );
@@ -267,7 +270,8 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         {
-          error: "アップロードされたデータが大きすぎます（最大約6MBまで）。画像を圧縮するかサイズを小さくしてください。",
+          error:
+            "アップロードされたデータが大きすぎます（最大約6MBまで）。画像を圧縮するかサイズを小さくしてください。",
           code: "PAYLOAD_TOO_LARGE",
         },
         { status: 413 },
@@ -363,7 +367,8 @@ export async function POST(request: NextRequest) {
       const { latitude, longitude, name } = validatedBody.location;
 
       // 場所名が指定されていない場合はデフォルト値を設定
-      const locationName = name || `位置情報 (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+      const locationName =
+        name || `位置情報 (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
 
       try {
         const createdPlace = await SpatialQueries.createPlace(

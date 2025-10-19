@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const limitParam = searchParams.get("limit");
     const sortByParam = searchParams.get("sort_by");
     const cursorParam = searchParams.get("cursor");
-    const moodTypesParam = searchParams.getAll("mood_type"); // 複数の mood_type を取得
+    const _moodTypesParam = searchParams.getAll("mood_type"); // 複数の mood_type を取得
 
     const limit = limitParam ? parseInt(limitParam, 10) : 20;
     const cursor = cursorParam ? parseFloat(cursorParam) : undefined;
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
         {
           error: "A valid sort_by parameter is required (e.g., random_key_1).",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const sortBy = sortByParam as SortKey;
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     console.error("Failed to fetch feed:", error);
     return NextResponse.json(
       { error: "An error occurred while fetching the feed." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

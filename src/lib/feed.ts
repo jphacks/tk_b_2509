@@ -1,7 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { ALLOWED_SORT_KEYS, type SortKey } from "./feed-types";
 import type { MoodType } from "./post-types";
 import { prisma } from "./prisma";
-import { Prisma } from "@prisma/client";
 
 export interface PostData {
   id: number;
@@ -31,7 +31,7 @@ export async function fetchPosts(
   sortKey: string | undefined,
   limit: number = 10,
   cursor: number | undefined = undefined,
-  moodTypes?: string[]
+  moodTypes?: string[],
 ): Promise<ApiResponse> {
   const params = new URLSearchParams();
   params.append("limit", limit.toString());
@@ -56,7 +56,7 @@ export async function fetchPosts(
 
 export function getRandomSortKey(excludes: string[] = []): string {
   const filteredKeys = ALLOWED_SORT_KEYS.filter(
-    (key) => !excludes.includes(key)
+    (key) => !excludes.includes(key),
   );
   const randomIndex = Math.floor(Math.random() * filteredKeys.length);
   return filteredKeys[randomIndex];
@@ -65,7 +65,7 @@ export function getRandomSortKey(excludes: string[] = []): string {
 export async function getFeedLogic(
   sortBy: SortKey,
   limit: number,
-  cursor?: number
+  cursor?: number,
 ): Promise<ApiResponse> {
   // ---- 重要：ソートキーのバリデーション（識別子はパラメータ化できないため）----
   if (!ALLOWED_SORT_KEYS.includes(sortBy)) {
@@ -167,6 +167,112 @@ export async function getFeedLogic(
     posts: formattedPosts,
     nextPageState: {
       sortBy: sortBy,
+      cursor: nextCursor,
+    },
+  };
+}
+
+/**
+ * 指定されたユーザーの投稿を取得する関数
+ * プロファイルページ用：気分によるフィルタリングなし
+ */
+export async function getUserPostsLogic(
+  userId: string | number,
+  limit: number = 10,
+  cursor?: number,
+): Promise<ApiResponse> {
+  // ---- cursor の検証（数値前提のため）----
+  if (cursor !== undefined && !Number.isFinite(cursor)) {
+    throw new Error("Invalid cursor");
+  }
+  const parsedCursor = cursor as number | undefined;
+
+  // 昇順のIDでソート（気分フィルタリングなし）
+  const postsFromDb = await prisma.$queryRaw<
+    Array<{
+      id: string;
+      place_id: string;
+      mood_type: string;
+      contents: string;
+      img: string | null;
+      sort_key: number;
+      place_name: string;
+      geom_text: string;
+      author_name: string;
+      author_avatar: string | null;
+      reaction_count: string;
+    }>
+  >(Prisma.sql`
+    SELECT 
+      p.id,
+      p."placeId" as place_id,
+      p.mood_type,
+      p.contents,
+      p.img,
+      p.id as sort_key,
+      pl.name as place_name,
+      ST_AsText(pl.geom) as geom_text,
+      u.name as author_name,
+      u.avatar as author_avatar,
+      COUNT(r.id) as reaction_count
+    FROM "Post" p
+    JOIN "Place" pl ON p."placeId" = pl.id
+    JOIN "User"  u  ON p."authorId" = u.id
+    LEFT JOIN "Reaction" r ON p.id = r."postId"
+    WHERE p."authorId" = ${parseInt(userId.toString())}
+    ${
+      parsedCursor !== undefined
+        ? Prisma.sql`AND p.id > ${parsedCursor}`
+        : Prisma.empty
+    }
+    GROUP BY p.id, pl.id, u.id
+    ORDER BY p.id ASC
+    LIMIT ${limit + 1}
+  `);
+
+  // 2. 次ページのカーソルを決定
+  let nextCursor: number | null = null;
+  let postsForResponse = postsFromDb;
+
+  if (postsFromDb.length > limit) {
+    const lastPost = postsFromDb[postsFromDb.length - 1];
+    postsForResponse = postsFromDb.slice(0, limit);
+    nextCursor = Number(lastPost.sort_key);
+  }
+
+  // 3. フロントエンド用に整形
+  const formattedPosts: PostData[] = postsForResponse
+    .map((post) => {
+      const match = POINT_PATTERN.exec(post.geom_text ?? "");
+      if (!match) {
+        return null;
+      }
+      const longitude = Number(match[1]);
+      const latitude = Number(match[2]);
+      if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) {
+        return null;
+      }
+
+      return {
+        id: Number(post.id),
+        placeId: Number(post.place_id),
+        placeName: post.place_name,
+        moodType: post.mood_type as MoodType,
+        contents: post.contents,
+        imageUrl: post.img,
+        reactionCount: Number(post.reaction_count),
+        userAvatarUrl: post.author_avatar,
+        username: post.author_name,
+        latitude,
+        longitude,
+      } as PostData;
+    })
+    .filter((p): p is PostData => p !== null);
+
+  return {
+    posts: formattedPosts,
+    nextPageState: {
+      sortBy: "id",
       cursor: nextCursor,
     },
   };
