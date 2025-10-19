@@ -1,5 +1,5 @@
-import { ALLOWED_SORT_KEYS, SortKey } from "./feed-types";
-import { MoodType } from "./post-types";
+import { ALLOWED_SORT_KEYS, type SortKey } from "./feed-types";
+import type { MoodType } from "./post-types";
 import { prisma } from "./prisma";
 
 export interface PostData {
@@ -26,7 +26,8 @@ export interface ApiResponse {
 export async function fetchPosts(
   sortKey: string | undefined,
   limit: number = 10,
-  cursor: number | undefined = undefined
+  cursor: number | undefined = undefined,
+  moodTypes?: string[],
 ): Promise<ApiResponse> {
   const params = new URLSearchParams();
   params.append("limit", limit.toString());
@@ -35,6 +36,12 @@ export async function fetchPosts(
   }
   if (cursor) {
     params.append("cursor", cursor.toString());
+  }
+  if (moodTypes && moodTypes.length > 0) {
+    // 複数の mood_type をクエリパラメータに追加
+    for (const moodType of moodTypes) {
+      params.append("mood_type", moodType);
+    }
   }
 
   const response = await fetch(`/api/post/getFeed?${params.toString()}`);

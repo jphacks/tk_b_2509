@@ -85,11 +85,6 @@ export interface PostFormData {
   location: PostLocation | null;
 }
 
-export interface PlaceOption {
-  id: string;
-  name: string;
-}
-
 // コンポーネントProps型定義（各コンポーネントから移動）
 export interface FeedListProps {
   initialPosts: PostData[];
@@ -99,10 +94,6 @@ export interface PostFormFieldsProps {
   formData: PostFormData;
   isSubmitting: boolean;
   onSpotNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  places: PlaceOption[];
-  placesLoading: boolean;
-  placesError: string | null;
-  onPlaceSelect: (placeId: string | null) => void;
   onTextChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onMoodSelect: (mood: MoodType) => void;
   onImageSelect: (file: File | null) => void;

@@ -2,21 +2,13 @@
 
 import type {
   MoodType,
-  PlaceOption,
   PostDialogProps,
   PostFormData,
 } from "@/lib/post-types";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostFormFields from "./PostFormFields";
-import { getLocationWithFallback } from "@/lib/geolocation";
-// import type { MoodType, PostFormData, PostDialogProps, PlaceOption } from "@/lib/post-types"; // NOTE: 入れたほうがいいかも？
-
-const DEFAULT_PLACE_PARAMS = {
-  lat: 35.6812,
-  lng: 139.7671,
-  radius: 5000,
-};
+import { getCurrentLocation } from "@/lib/geolocation";
 
 export default function PostDialog({
   isOpen,
@@ -32,9 +24,6 @@ export default function PostDialog({
     location: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [places, setPlaces] = useState<PlaceOption[]>([]);
-  const [placesLoading, setPlacesLoading] = useState(false);
-  const [placesError, setPlacesError] = useState<string | null>(null);
 
   // ダイアログが開いているときは body スクロールを禁止
   useEffect(() => {
@@ -45,70 +34,6 @@ export default function PostDialog({
     }
     return () => {
       document.body.style.overflow = "";
-    };
-  }, [isOpen]);
-
-  // 場所情報の取得処理
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    let cancelled = false;
-    const fetchPlaces = async () => {
-      setPlacesLoading(true);
-      setPlacesError(null);
-      try {
-        const params = new URLSearchParams({
-          lat: DEFAULT_PLACE_PARAMS.lat.toString(),
-          lng: DEFAULT_PLACE_PARAMS.lng.toString(),
-          radius: DEFAULT_PLACE_PARAMS.radius.toString(),
-        });
-        const response = await fetch(`/api/places?${params.toString()}`);
-        if (!response.ok) {
-          const errorBody = await response.json().catch(() => ({}));
-          throw new Error(errorBody.error || "場所の取得に失敗しました");
-        }
-        const body = await response.json();
-        const options: PlaceOption[] = Array.isArray(body?.data)
-          ? body.data.map((place: { id: number | string; name: string }) => ({
-              id: place.id.toString(),
-              name: place.name,
-            }))
-          : [];
-        if (!cancelled) {
-          setPlaces(options);
-          setFormData((prev) => {
-            if (
-              prev.placeId &&
-              options.some((option) => option.id === prev.placeId)
-            ) {
-              return prev;
-            }
-            return {
-              ...prev,
-              placeId: null,
-              spotName: "",
-            };
-          });
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setPlacesError(
-            error instanceof Error ? error.message : "場所の取得に失敗しました"
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setPlacesLoading(false);
-        }
-      }
-    };
-
-    void fetchPlaces();
-
-    return () => {
-      cancelled = true;
     };
   }, [isOpen]);
 
@@ -138,27 +63,16 @@ export default function PostDialog({
     setFormData((prev) => ({ ...prev, image: file }));
   };
 
-  const handlePlaceSelect = (placeId: string | null) => {
-    if (!placeId) {
-      setFormData((prev) => ({ ...prev, placeId: null, spotName: "" }));
-      return;
-    }
-    const target = places.find((place) => place.id === placeId);
-    setFormData((prev) => ({
-      ...prev,
-      placeId: target?.name ?? placeId,
-      spotName: target?.name ?? "",
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.placeId || !formData.mood || !formData.text.trim()) {
+    const comment = formData.text.trim();
+    if (!formData.placeId || !formData.mood || !comment) {
       alert("スポット、気分、テキストは必須です");
       return;
     }
 
     const placeInput = formData.placeId?.trim();
+    const spotName = formData.spotName.trim();
     if (!placeInput) {
       alert("スポット名を入力してください");
       return;
@@ -166,25 +80,17 @@ export default function PostDialog({
 
     setIsSubmitting(true);
     try {
-      const currentLocation = await getLocationWithFallback();
-
-      if (
-        typeof currentLocation.latitude !== "number" ||
-        typeof currentLocation.longitude !== "number"
-      ) {
-        throw new Error("位置情報の取得に失敗しました");
-      }
+      const currentLocation = await getCurrentLocation();
 
       await onSubmit({
         ...formData,
         placeId: placeInput,
-        spotName: formData.spotName.trim() || placeInput,
-        text: formData.text.trim(),
+        spotName: spotName || placeInput,
+        text: comment,
         location: {
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude,
-          name: currentLocation.name,
-          isDefault: currentLocation.isDefault ?? undefined,
+          name: spotName || undefined,
         },
       });
       setFormData({
@@ -242,10 +148,6 @@ export default function PostDialog({
           formData={formData}
           onSpotNameChange={handleSpotNameChange}
           isSubmitting={isSubmitting}
-          places={places}
-          placesLoading={placesLoading}
-          placesError={placesError}
-          onPlaceSelect={handlePlaceSelect}
           onTextChange={handleTextChange}
           onMoodSelect={handleMoodSelect}
           onImageSelect={handleImageSelect}
@@ -285,10 +187,6 @@ export default function PostDialog({
             formData={formData}
             onSpotNameChange={handleSpotNameChange}
             isSubmitting={isSubmitting}
-            places={places}
-            placesLoading={placesLoading}
-            placesError={placesError}
-            onPlaceSelect={handlePlaceSelect}
             onTextChange={handleTextChange}
             onMoodSelect={handleMoodSelect}
             onImageSelect={handleImageSelect}
