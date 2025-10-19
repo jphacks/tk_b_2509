@@ -4,6 +4,11 @@ export type CreatePostRequestBody = {
   contents?: unknown;
   placeId?: unknown;
   imageUrl?: unknown;
+  location?: {
+    latitude: number;
+    longitude: number;
+    name?: string;
+  };
 };
 
 export const ALLOWED_MOOD_TYPES = ["relax", "focus", "idea", "chat"] as const;
@@ -14,6 +19,17 @@ export type ParsedCreatePostBody = {
   moodType: MoodType;
   contents: string;
   placeId: bigint;
+  imageUrl: string | null;
+};
+
+export type ParsedCreatePostBodyWithLocation = {
+  moodType: MoodType;
+  contents: string;
+  location: {
+    latitude: number;
+    longitude: number;
+    name?: string;
+  };
   imageUrl: string | null;
 };
 
