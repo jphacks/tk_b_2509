@@ -6,6 +6,9 @@ import { Loader2, Plus } from "lucide-react"; // shadcn/ui 標準のスピナー
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer"; // 無限スクロール用
 import type { PostFormData } from "@/components/post";
+import { getRandomSortKey, fetchPosts } from "@/lib/feed";
+import { SortKey } from "@/lib/feed-types";
+import { createPost } from "@/lib/api/posts";
 
 // import { PostData } from "@/types"; // 型定義をインポート
 
@@ -42,6 +45,10 @@ export function FeedList({ initialPosts }: FeedListProps) {
   // 3. 投稿ダイアログの状態管理
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
 
+  // 4. 現在のソートキーとカーソルの状態管理
+  const [sortBy, setSortBy] = useState<SortKey>('random_key_1');
+  const [cursor, setCursor] = useState<number | undefined>(undefined);
+
   // 4. 「無限スクロール」用の設定
   const { ref: loadMoreRef, inView: loadMoreInView } = useInView({
     threshold: 0, // 少しでも見えたらトリガー
@@ -58,13 +65,16 @@ export function FeedList({ initialPosts }: FeedListProps) {
         setIsRefreshing(true);
         
         setSortBy((prev) => {
-          const newSortKey = getRandomSortKey([prev]);
+          const newSortKey = getRandomSortKey([prev]) as SortKey;
           return newSortKey;
         });
 
-        fetchPosts(sortBy, 10, undefined).then((data) => {
-          setPostList(data.posts);
-          setCursor(undefined);
+        fetchPosts(sortBy, 10, cursor).then((data) => {
+          setPosts(data.posts.map(post => ({
+            ...post,
+            mood_type: post.moodType
+          })));
+          setCursor(data.nextPageState.cursor || undefined);
           setIsRefreshing(false);
         }).catch(() => {
           setIsRefreshing(false);
@@ -215,7 +225,7 @@ export function FeedList({ initialPosts }: FeedListProps) {
           });
 
           const newPost: PostData = {
-            id: createdPost.id,
+            id: Number(createdPost.id),
             placeName: createdPost.placeName,
             mood_type: createdPost.moodType,
             contents: createdPost.contents,

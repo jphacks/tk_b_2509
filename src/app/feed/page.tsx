@@ -1,18 +1,9 @@
 import { FeedList } from "@/components/post/FeedList";
+import { getRandomSortKey, getFeedLogic, PostData } from "@/lib/feed";
+import { SortKey } from "@/lib/feed-types";
 
-// import { PostData } from "@/types"; // 別のファイルに型を定義した場合
-
-/* --- 型定義 (このファイルに直接書く場合) --- */
-interface PostData {
-  id: number;
-  placeName: string;
-  mood_type: string;
-  contents: string;
-  imageUrl: string | null;
-  reactionCount: number;
-  userAvatarUrl: string | null;
-  username: string;
-}
+// Use the PostData type from lib/feed for consistency
+type LocalPostData = PostData;
 
 /**
  * 1. データベースから投稿データを取得する関数（ダミー）
@@ -29,7 +20,7 @@ async function fetchPosts(): Promise<PostData[]> {
     {
       id: 1,
       placeName: "スターバックス 渋谷TSUTAYA店",
-      mood_type: "focus", // バッジ用のデータ
+      moodType: "focus", // バッジ用のデータ
       contents:
         "ここのスタバは窓際席が最高です。コンセントも完備されていて、Wi-Fiも安定。長時間の作業にもってこいですが、午後は混雑しがちなので朝一が狙い目です。",
       imageUrl:
@@ -41,7 +32,7 @@ async function fetchPosts(): Promise<PostData[]> {
     {
       id: 2,
       placeName: "近所の公民館の図書室",
-      mood_type: "quiet", // バッジ用のデータ
+      moodType: "focus", // バッジ用のデータ
       contents:
         "意外と穴場なのがここの図書室。静かで、机も広い。飲食は禁止ですが、集中して本を読んだり、PC作業（タイピング音注意）するのには最適。無料で使えるのも嬉しいポイント。",
       imageUrl: null, // ★画像なし
@@ -52,7 +43,7 @@ async function fetchPosts(): Promise<PostData[]> {
     {
       id: 3,
       placeName: "コメダ珈琲店",
-      mood_type: "relax",
+      moodType: "relax",
       contents: "シロノワールを食べながら作業。ソファ席が快適すぎる。",
       imageUrl: null,
       reactionCount: 77,
@@ -85,12 +76,11 @@ export default async function FeedPage() {
       {/* FeedList には initialPosts 配列と、
         クライアントが「続きを読む」ために使う sortKey を渡す
       */}
-      <FeedList 
-        posts={initialFeedData.posts} 
-        nextPageState={{
-          sortBy: initialFeedData.nextPageState.sortBy, 
-          cursor: initialFeedData.nextPageState.cursor 
-        }}
+      <FeedList
+        initialPosts={initialFeedData.posts.map(post => ({
+          ...post,
+          mood_type: post.moodType
+        }))}
       />
     </div>
   );
