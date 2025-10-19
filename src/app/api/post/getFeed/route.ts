@@ -1,7 +1,7 @@
 // app/api/post/getFeed/route.ts
 
-import { getFeedLogic } from '@/lib/feed';
-import { ALLOWED_SORT_KEYS, SortKey } from '@/lib/feed-types';
+import type { SortKey } from '@/lib/feed-types';
+import { ALLOWED_SORT_KEYS } from '@/lib/feed-types';
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -19,6 +19,7 @@ export async function GET(request: Request) {
     const limitParam = searchParams.get('limit');
     const sortByParam = searchParams.get('sort_by');
     const cursorParam = searchParams.get('cursor');
+    const moodTypesParam = searchParams.getAll('mood_type'); // 複数の mood_type を取得
 
     const limit = limitParam ? parseInt(limitParam, 10) : 20;
     const cursor = cursorParam ? parseFloat(cursorParam) : undefined;
@@ -34,11 +35,15 @@ export async function GET(request: Request) {
 
     // 2. データベースから投稿を取得
     // limit + 1 件取得することで、次のページが存在するかを判定する
+    const whereCondition: Record<string, unknown> = cursor ? { [sortBy]: { gt: cursor } } : {};
+    if (moodTypesParam.length > 0) {
+      // 複数の mood_type が指定されている場合は IN フィルター
+      whereCondition.mood_type = { in: moodTypesParam };
+    }
+
     const posts = await prisma.post.findMany({
       take: limit + 1, // 次のページの存在確認のため +1 件取得
-      where: cursor
-        ? { [sortBy]: { gt: cursor } } // カーソル指定時は、その値より大きいものを取得
-        : undefined,                  // 初回ロード時は条件なし
+      where: whereCondition as unknown as Record<string, unknown>,
       orderBy: {
         [sortBy]: 'asc', // 指定されたキーで昇順ソート
       },

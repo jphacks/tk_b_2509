@@ -11,6 +11,13 @@ import { SpatialQueries } from "@/lib/spatial";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "6mb",
+    },
+  },
+};
 
 function parseBigIntId(value: unknown): bigint | null {
   if (typeof value === "bigint") {
@@ -253,7 +260,19 @@ export async function POST(request: NextRequest) {
   let requestBody: CreatePostRequestBody;
   try {
     requestBody = (await request.json()) as CreatePostRequestBody;
-  } catch (_error) {
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      /size limit|body exceeded/i.test(error.message)
+    ) {
+      return NextResponse.json(
+        {
+          error: "アップロードされたデータが大きすぎます（最大約6MBまで）。画像を圧縮するかサイズを小さくしてください。",
+          code: "PAYLOAD_TOO_LARGE",
+        },
+        { status: 413 },
+      );
+    }
     return NextResponse.json(
       {
         error: "不正なJSON形式です",
