@@ -26,7 +26,6 @@ export interface ApiResponse {
 
 // ---- 追加：POINT 解析の正規表現をモジュール定数に ----
 const POINT_PATTERN = /POINT\s*\(\s*([-+]?\d*\.?\d+)\s+([-+]?\d*\.?\d+)\s*\)/;
-
 export async function fetchPosts(
   sortKey: string | undefined,
   limit: number = 10,
