@@ -57,6 +57,7 @@ export const REQUIRED_CREATE_POST_FIELDS = [
 // 投稿データ型（FeedList.tsxから移動）
 export interface PostData {
   id: number;
+  placeId: number;
   placeName: string;
   moodType: string;
   contents: string;
@@ -64,6 +65,10 @@ export interface PostData {
   reactionCount: number;
   userAvatarUrl: string | null;
   username: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 // 投稿フォーム関連の型定義

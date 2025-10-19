@@ -4,6 +4,7 @@ import { prisma } from "./prisma";
 
 export interface PostData {
   id: number;
+  placeId: number;
   placeName: string;
   moodType: MoodType;
   contents: string;
@@ -11,6 +12,10 @@ export interface PostData {
   reactionCount: number;
   userAvatarUrl: string | null;
   username: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface ApiResponse {
@@ -51,55 +56,105 @@ export async function getFeedLogic(
 ): Promise<ApiResponse> {
   
   // 1. データベースから取得 (route.tsからロジックを移動)
-  const postsFromDb = await prisma.post.findMany({
-    take: limit + 1,
-    where: cursor ? { [sortBy]: { gt: cursor } } : undefined,
-    orderBy: { [sortBy]: "asc" },
-    select: {
-      id: true,
-      mood_type: true,
-      contents: true,
-      img: true,
-      [sortBy]: true,
-      place: { select: { name: true } },
-      author: { select: { name: true, avatar: true } },
-      _count: { select: { reactions: true } },
-    },
-  }) as unknown as Array<{
+  // NOTE: Prismaでは Unsupported型(geom)を直接selectできないため、rawクエリを使用
+  type PostRow = {
     id: bigint;
+    placeId: bigint;
     mood_type: string;
     contents: string;
     img: string | null;
-    random_key_1: number;
-    random_key_2: number;
-    random_key_3: number;
-    random_key_4: number;
-    random_key_5: number;
-    place: { name: string };
-    author: { name: string; avatar: string | null };
-    _count: { reactions: number };
-  }>;
+    sort_value: number;
+    place_name: string;
+    latitude: number;
+    longitude: number;
+    author_name: string;
+    author_avatar: string | null;
+    reactions_count: number;
+  };
+
+  // 動的にカラムを参照するため、whereクローズを分岐
+  let postsFromDb: PostRow[];
+  
+  if (cursor) {
+    postsFromDb = await (prisma as any).$queryRaw`
+      SELECT
+        p.id,
+        p."placeId",
+        p.mood_type,
+        p.contents,
+        p.img,
+        p."${sortBy}" as sort_value,
+        pl.name as place_name,
+        ST_Y(pl.geom)::float as latitude,
+        ST_X(pl.geom)::float as longitude,
+        u.name as author_name,
+        u.avatar as author_avatar,
+        COUNT(r.id)::int as reactions_count
+      FROM "Post" p
+      JOIN "Place" pl ON p."placeId" = pl.id
+      JOIN "User" u ON p."authorId" = u.id
+      LEFT JOIN "Reaction" r ON p.id = r."postId"
+      WHERE p."${sortBy}" > ${cursor}
+      GROUP BY p.id, pl.id, u.id
+      ORDER BY p."${sortBy}" ASC
+      LIMIT ${limit + 1}
+    `;
+  } else {
+    postsFromDb = await (prisma as any).$queryRaw`
+      SELECT
+        p.id,
+        p."placeId",
+        p.mood_type,
+        p.contents,
+        p.img,
+        p."${sortBy}" as sort_value,
+        pl.name as place_name,
+        ST_Y(pl.geom)::float as latitude,
+        ST_X(pl.geom)::float as longitude,
+        u.name as author_name,
+        u.avatar as author_avatar,
+        COUNT(r.id)::int as reactions_count
+      FROM "Post" p
+      JOIN "Place" pl ON p."placeId" = pl.id
+      JOIN "User" u ON p."authorId" = u.id
+      LEFT JOIN "Reaction" r ON p.id = r."postId"
+      GROUP BY p.id, pl.id, u.id
+      ORDER BY p."${sortBy}" ASC
+      LIMIT ${limit + 1}
+    `;
+  }
 
   // 2. 次ページのカーソルを決定 (route.tsからロジックを移動)
   let nextCursor: number | null = null;
   if (postsFromDb.length > limit) {
-    const lastPost = postsFromDb.pop();
+    const lastPost = postsFromDb[postsFromDb.length - 1];
+    postsFromDb.pop();
     if (lastPost) {
-      nextCursor = lastPost[sortBy] as number;
+      nextCursor = Number(lastPost.sort_value);
     }
   }
 
   // 3. フロントエンド用に整形 (route.tsからロジックを移動)
-  const formattedPosts: PostData[] = postsFromDb.map((post) => ({
-    id: Number(post.id), // BigIntをnumberに
-    placeName: post.place.name,
-    moodType: post.mood_type as MoodType, // mood_type -> moodType
-    contents: post.contents,
-    imageUrl: post.img,
-    reactionCount: post._count.reactions,
-    userAvatarUrl: post.author.avatar,
-    username: post.author.name,
-  }));
+  const formattedPosts: PostData[] = postsFromDb.map((post) => {
+    // 座標情報を抽出
+    const location = {
+      latitude: Number(post.latitude),
+      longitude: Number(post.longitude),
+    };
+
+    return {
+      id: Number(post.id), // BigIntをnumberに
+      placeId: Number(post.placeId), // placeIdを追加
+      placeName: post.place_name,
+      moodType: post.mood_type as MoodType, // mood_type -> moodType
+      contents: post.contents,
+      imageUrl: post.img,
+      reactionCount: Number(post.reactions_count),
+      userAvatarUrl: post.author_avatar,
+      username: post.author_name,
+      location, // 座標情報を追加
+    };
+  });
 
   return {
     posts: formattedPosts,
