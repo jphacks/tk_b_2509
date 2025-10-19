@@ -223,6 +223,7 @@ export default function PostDialog({
           hidden md:flex fixed md:inset-1/2 md:-translate-x-1/2 md:-translate-y-1/2 
           md:w-full md:max-w-md md:rounded-xl md:shadow-2xl md:flex-col
           z-[9999] bg-white outline-none
+          md:max-h-[90vh] md:overflow-y-auto
         "
         open={isOpen}
       >
