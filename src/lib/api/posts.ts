@@ -5,6 +5,11 @@ export type CreatePostPayload = {
   contents: string;
   placeId: string;
   imageUrl?: string | null;
+  location?: {
+    latitude: number;
+    longitude: number;
+    name?: string;
+  };
 };
 
 export type CreatedPost = {
@@ -36,6 +41,9 @@ type CreatePostErrorResponse = {
 export async function createPost(
   payload: CreatePostPayload,
 ): Promise<CreatedPost> {
+  const placeId = payload.placeId.trim();
+  const contents = payload.contents.trim();
+
   const response = await fetch("/api/post/createPost", {
     method: "POST",
     headers: {
@@ -44,9 +52,16 @@ export async function createPost(
     credentials: "include",
     body: JSON.stringify({
       moodType: payload.moodType,
-      contents: payload.contents,
-      placeId: payload.placeId,
+      contents,
+      placeId,
       imageUrl: payload.imageUrl ?? null,
+      location: payload.location
+        ? {
+            latitude: payload.location.latitude,
+            longitude: payload.location.longitude,
+            name: payload.location.name,
+          }
+        : undefined,
     }),
   });
 
