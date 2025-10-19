@@ -1,14 +1,15 @@
 "use client";
 
+import type { PostFormFieldsProps } from "@/lib/post-types";
 import ImageUpload from "./ImageUpload";
 import MoodSelector from "./MoodSelector";
-import type { MoodType, PostFormFieldsProps } from "@/lib/post-types";
 
 const MAX_COMMENT_LENGTH = 60;
 
 export default function PostFormFields({
   formData,
   isSubmitting,
+  onSpotNameChange,
   places,
   placesLoading,
   placesError,
@@ -34,7 +35,21 @@ export default function PostFormFields({
         >
           スポット名 <span className="text-red-500">*</span>
         </label>
-        <select
+        {
+          // 下が正解
+        }
+        <input
+          id="placeId"
+          type="text"
+          value={formData.placeId ?? ""}
+          onChange={onSpotNameChange}
+          placeholder="例: 〇〇カフェ、xx公園の東ベンチ"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {
+          // 上が正解、下のselectを消したい
+        }
+        {/* <select
           id="placeId"
           value={formData.placeId ?? ""}
           onChange={handlePlaceChange}
@@ -53,7 +68,7 @@ export default function PostFormFields({
         )}
         {placesError && (
           <p className="mt-1 text-xs text-red-600">{placesError}</p>
-        )}
+        )} */}
       </div>
 
       {/* 気分選択 */}

@@ -57,6 +57,7 @@ export interface FeedListProps {
 export interface PostFormFieldsProps {
   formData: PostFormData;
   isSubmitting: boolean;
+  onSpotNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   places: PlaceOption[];
   placesLoading: boolean;
   placesError: string | null;

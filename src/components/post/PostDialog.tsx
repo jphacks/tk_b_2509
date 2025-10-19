@@ -1,14 +1,14 @@
 "use client";
 
+import type {
+  MoodType,
+  PlaceOption,
+  PostDialogProps,
+  PostFormData,
+} from "@/lib/post-types";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostFormFields from "./PostFormFields";
-import type {
-  MoodType,
-  PostFormData,
-  PostDialogProps,
-  PlaceOption,
-} from "@/lib/post-types";
 
 const DEFAULT_PLACE_PARAMS = {
   lat: 35.6812,
@@ -111,6 +111,11 @@ export default function PostDialog({
 
   if (!isOpen) return null;
 
+  const handleSpotNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, placeId: e.target.value }));
+    
+  };
+
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     if (text.length <= 60) {
@@ -146,28 +151,30 @@ export default function PostDialog({
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      if (onSubmit) {
-        await onSubmit(formData);
-      }
-      // リセット
-      setFormData({
-        placeId: null,
-        spotName: "",
-        mood: null,
-        text: "",
-        image: null,
-      });
-      onClose();
-    } catch (error) {
-      console.error("投稿エラー:", error);
-      const message =
-        error instanceof Error ? error.message : "投稿に失敗しました";
-      alert(message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    // setIsSubmitting(true);
+    // try {
+    //   if (onSubmit) {
+    //     await onSubmit(formData);
+    //   }
+    //   // リセット
+    //   setFormData({
+    //     placeId: null,
+    //     spotName: "",
+    //     mood: null,
+    //     text: "",
+    //     image: null,
+    //   });
+    //   onClose();
+    // } catch (error) {
+    //   console.error("投稿エラー:", error);
+    //   const message =
+    //     error instanceof Error ? error.message : "投稿に失敗しました";
+    //   alert(message);
+    // } finally {
+    //   setIsSubmitting(false);
+    // }
+    alert("投稿機能を実装してください");
+    onClose();
   };
 
   return (
@@ -203,6 +210,7 @@ export default function PostDialog({
 
         <PostFormFields
           formData={formData}
+          onSpotNameChange={handleSpotNameChange}
           isSubmitting={isSubmitting}
           places={places}
           placesLoading={placesLoading}
@@ -245,6 +253,7 @@ export default function PostDialog({
         <div className="flex flex-col p-4 gap-4 pb-8">
           <PostFormFields
             formData={formData}
+            onSpotNameChange={handleSpotNameChange}
             isSubmitting={isSubmitting}
             places={places}
             placesLoading={placesLoading}
