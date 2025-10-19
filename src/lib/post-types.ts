@@ -91,6 +91,11 @@ export interface FeedListProps {
   initialPosts: PostData[];
 }
 
+export interface UserPostsListProps {
+  initialPosts: PostData[];
+  onPostDialogOpen?: (isOpen: boolean) => void;
+}
+
 export interface PostFormFieldsProps {
   formData: PostFormData;
   isSubmitting: boolean;

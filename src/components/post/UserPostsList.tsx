@@ -3,8 +3,12 @@
 import { PostDialog } from "@/components/post";
 import { ReviewCard } from "@/components/post/ReviewCard";
 import { createPost } from "@/lib/api/posts";
-import type { FeedListProps, PostData, PostFormData } from "@/lib/post-types";
-import { Loader2, Plus } from "lucide-react";
+import type {
+    PostData,
+    PostFormData,
+    UserPostsListProps,
+} from "@/lib/post-types";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
@@ -31,9 +35,12 @@ export function getBadgeImageUrl(moodType: string): string {
 
 /**
  * ユーザーの投稿を表示するコンポーネント（プロファイル用）
- * FeedListと異なり、気分フィルタリング機能と「引っ張して更新」機能はなし
+ * FeedListと異なり、気分フィルタリング機能と「引っ張って更新」機能はなし
  */
-export function UserPostsList({ initialPosts }: FeedListProps) {
+export function UserPostsList({
+  initialPosts,
+  onPostDialogOpen,
+}: UserPostsListProps) {
   // 1. 投稿リストの状態管理
   const [posts, setPosts] = useState(initialPosts);
 
@@ -144,17 +151,6 @@ export function UserPostsList({ initialPosts }: FeedListProps) {
 
   return (
     <div className="space-y-4">
-      {/* 新規投稿ボタン */}
-      <div className="flex justify-end mb-6">
-        <button
-          onClick={() => setIsPostDialogOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          新規投稿
-        </button>
-      </div>
-
       {/* 投稿ダイアログ */}
       <PostDialog
         isOpen={isPostDialogOpen}
