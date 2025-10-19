@@ -177,7 +177,7 @@ export default function PostDialog({
         type="button"
         tabIndex={-1}
         aria-hidden="true"
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+        className="fixed inset-0 bg-white/20 backdrop-blur-sm z-[9998] transition-opacity"
         onClick={onClose}
       />
 
@@ -186,7 +186,7 @@ export default function PostDialog({
         className="
           hidden md:flex fixed md:inset-1/2 md:-translate-x-1/2 md:-translate-y-1/2 
           md:w-full md:max-w-md md:rounded-xl md:shadow-2xl md:flex-col
-          z-50 bg-white outline-none
+          z-[9999] bg-white outline-none
         "
         open={isOpen}
       >
@@ -223,7 +223,7 @@ export default function PostDialog({
         aria-labelledby="postSheetTitle"
         className="
           fixed bottom-0 left-0 right-0 md:hidden
-          bg-white rounded-t-2xl shadow-2xl z-50
+          bg-white rounded-t-2xl shadow-2xl z-[9999]
           animate-in slide-in-from-bottom-4
           max-h-[90vh] overflow-y-auto
         "
