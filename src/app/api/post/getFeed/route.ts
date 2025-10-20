@@ -34,7 +34,14 @@ export async function GET(request: Request) {
     const sortBy = sortByParam as SortKey;
 
     // 2. getFeedLogic を呼び出して、整形済みのデータを取得
-    const apiResponse = await getFeedLogic(sortBy, limit, cursor, moodTypesParam.length > 0 ? moodTypesParam : undefined);
+    const apiResponse = await getFeedLogic(
+      sortBy,
+      limit,
+      cursor,
+      moodTypesParam.length > 0
+        ? moodTypesParam
+        : undefined
+    );
 
     // 3. 最終的なJSONレスポンスを返す
     return NextResponse.json({
