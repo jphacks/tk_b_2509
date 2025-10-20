@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 
 export interface PostData {
   id: number;
+  placeId: number;
   placeName: string;
   moodType: MoodType;
   contents: string;
@@ -64,7 +65,8 @@ export function getRandomSortKey(excludes: string[] = []): string {
 export async function getFeedLogic(
   sortBy: SortKey,
   limit: number,
-  cursor?: number
+  cursor?: number,
+  moodTypes?: string[]
 ): Promise<ApiResponse> {
   // ---- 重要：ソートキーのバリデーション（識別子はパラメータ化できないため）----
   if (!ALLOWED_SORT_KEYS.includes(sortBy)) {
@@ -83,6 +85,7 @@ export async function getFeedLogic(
   const postsFromDb = await prisma.$queryRaw<
     Array<{
       id: string;
+      place_id: string;
       mood_type: string;
       contents: string;
       img: string | null;
@@ -96,6 +99,7 @@ export async function getFeedLogic(
   >(Prisma.sql`
     SELECT 
       p.id,
+      p."placeId" as place_id,
       p.mood_type,
       p.contents,
       p.img,
@@ -109,9 +113,15 @@ export async function getFeedLogic(
     JOIN "Place" pl ON p."placeId" = pl.id
     JOIN "User"  u  ON p."authorId" = u.id
     LEFT JOIN "Reaction" r ON p.id = r."postId"
+    WHERE 1=1
     ${
       parsedCursor !== undefined
-        ? Prisma.sql`WHERE p.${col} > ${parsedCursor}`
+        ? Prisma.sql`AND p.${col} > ${parsedCursor}`
+        : Prisma.empty
+    }
+    ${
+      moodTypes && moodTypes.length > 0
+        ? Prisma.sql`AND p.mood_type = ANY(${moodTypes})`
         : Prisma.empty
     }
     GROUP BY p.id, pl.id, u.id
@@ -146,6 +156,7 @@ export async function getFeedLogic(
 
       return {
         id: Number(post.id),
+        placeId: Number(post.place_id),
         placeName: post.place_name,
         moodType: post.mood_type as MoodType,
         contents: post.contents,

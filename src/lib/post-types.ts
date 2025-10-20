@@ -57,6 +57,7 @@ export const REQUIRED_CREATE_POST_FIELDS = [
 // 投稿データ型（FeedList.tsxから移動）
 export interface PostData {
   id: number;
+  placeId: number;
   placeName: string;
   moodType: string;
   contents: string;
