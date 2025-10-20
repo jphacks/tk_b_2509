@@ -38,8 +38,8 @@ export async function GET(request: Request) {
       sortBy,
       limit,
       cursor,
-      moodTypesParam.length > 0
-        ? moodTypesParam
+      _moodTypesParam.length > 0
+        ? _moodTypesParam
         : undefined
     );
 
