@@ -1,10 +1,6 @@
 "use client";
 
-import type {
-  MoodType,
-  PostDialogProps,
-  PostFormData,
-} from "@/lib/post-types";
+import type { MoodType, PostDialogProps, PostFormData } from "@/lib/post-types";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostFormFields from "./PostFormFields";

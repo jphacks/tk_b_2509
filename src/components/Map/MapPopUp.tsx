@@ -1,4 +1,4 @@
-import type { MapPopupProps } from '@/lib/map-types';
+import type { MapPopupProps } from "@/lib/map-types";
 
 export function MapPopup({ children }: MapPopupProps) {
   return (
